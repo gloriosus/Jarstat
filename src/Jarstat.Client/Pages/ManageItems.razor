@@ -1,0 +1,110 @@
+﻿@page "/manage/items"
+
+@layout ManageLayout
+
+@using Jarstat.Client.Enums;
+@using Jarstat.Client.Responses;
+
+@inject HttpClient Http
+@inject IJSRuntime js
+@inject ClientSettings clientSettings
+
+<div style="margin-top: 10px; width: 100%;">
+    <AntDesign.Search @bind-Value="searchKey" Placeholder="Поиск элемента" />
+    <div style="margin-top: 10px;">
+        <Button Type="@ButtonType.Primary" Disabled="@CreateFolderButtonDisabled" OnClick="CreateFolderOnButtonClick">Создать папку</Button>
+        <Button Type="@ButtonType.Primary" Disabled="@CreateDocumentButtonDisabled" OnClick="CreateDocumentOnButtonClick">Создать документ</Button>
+        <Button Type="@ButtonType.Default" Disabled="@EditButtonDisabled" OnClick="EditOnButtonClick">Изменить</Button>
+        <Button Type="@ButtonType.Default" Danger Disabled="@DeleteButtonDisabled" OnClick="DeleteOnButtonClick">Удалить</Button>
+        <Button Type="@ButtonType.Link" Disabled="@DownloadButtonDisabled" OnClick="DownloadOnButtonClick">Скачать файл</Button>
+    </div>
+    <Tree @ref="_tree"
+          DataSource="items"
+          TitleExpression="x => x.DataItem.DisplayName"
+          KeyExpression="x => x.DataItem.ItemId.ToString()"
+          ChildrenExpression="x => x.DataItem.Children"
+          IsLeafExpression="@(x => x.DataItem.Type.Equals("Document"))"
+          TItem="ItemResponse"
+	      ShowLine="true"
+	      ShowIcon="true"
+	      ShowLeafIcon="true"
+          SearchValue="@searchKey"
+          SearchExpression="x => x.DataItem.DisplayName.ToLower().Contains(searchKey.ToLower())"
+          OnDblClick="DownloadOnTreeNodeDoubleClick"
+          Draggable 
+          OnDrop="MoveItemOnDrop"
+          ExpandedKeys="expandedKeys"
+          OnExpandChanged="UpdateStateOnExpandChanged"
+          OnClick="SetButtonsOnTreeClick"
+          OnNodeLoadDelayAsync="OnNodeLoadDelayAsync"
+          @bind-SelectedData="selectedItem"
+          style="background: rgba(0,0,0,0); margin-top: 10px; overflow: auto; height: 65vh;" />
+    <Modal Title="Редактирование папки"
+           Visible="@_updateFolderVisible"
+           OnOk="UpdateFolderOnFinish"
+           OnCancel="() => _updateFolderVisible = false">
+        <Form Model="updateFolderRequest">
+            <FormItem>
+                <p>Отображаемое имя:</p>
+                <Input @bind-Value="updateFolderRequest.DisplayName" />
+            </FormItem>
+        </Form>
+    </Modal>
+    <Modal Title="Редактирование документа"
+           Visible="@_updateDocumentVisible"
+           OnOk="UpdateDocumentOnFinish"
+           OnCancel="() => _updateDocumentVisible = false">
+        <Form Model="updateDocumentRequest">
+            <FormItem>
+                <p>Отображаемое имя:</p>
+                <Input @bind-Value="updateDocumentRequest.DisplayName" />
+            </FormItem>
+            <FormItem>
+                <InputFile id="file-input" class="form-control" OnChange="@UploadFile" />
+                @switch (fileUploadState)
+                {
+                    case FileUploadState.Failure:
+                        <span class="text-danger" style="cursor: pointer;" title="Ошибка. Загрузить файл еще раз"><i class="bi-x-circle" style="font-size: 1.5rem"></i></span>
+                        break;
+                    case FileUploadState.Success:
+                        <span class="text-success" style="cursor: pointer;" title="Файл успешно загружен"><i class="bi-check2" style="font-size: 1.5rem"></i></span>
+                        break;
+                }
+            </FormItem>
+        </Form>
+    </Modal>
+    <Modal Title="Создание папки"
+           Visible="@_createFolderVisible"
+           OnOk="CreateFolderOnFinish"
+           OnCancel="() => _createFolderVisible = false">
+        <Form Model="createFolderRequest">
+            <FormItem>
+                <p>Отображаемое имя:</p>
+                <Input @bind-Value="createFolderRequest.DisplayName" />
+            </FormItem>
+        </Form>
+    </Modal>
+    <Modal Title="Создание документа"
+           Visible="@_createDocumentVisible"
+           OnOk="CreateDocumentOnFinish"
+           OnCancel="() => _createDocumentVisible = false">
+        <Form Model="createDocumentRequest">
+            <FormItem>
+                <p>Отображаемое имя:</p>
+                <Input @bind-Value="createDocumentRequest.DisplayName" />
+            </FormItem>
+            <FormItem>
+                <InputFile id="file-input" class="form-control" OnChange="@UploadFile" />
+                @switch (fileUploadState)
+                {
+                    case FileUploadState.Failure:
+                        <span class="text-danger" style="cursor: pointer;" title="Ошибка. Загрузить файл еще раз"><i class="bi-x-circle" style="font-size: 1.5rem"></i></span>
+                        break;
+                    case FileUploadState.Success:
+                        <span class="text-success" style="cursor: pointer;" title="Файл успешно загружен"><i class="bi-check2" style="font-size: 1.5rem"></i></span>
+                        break;
+                }
+            </FormItem>
+        </Form>
+    </Modal>
+</div>

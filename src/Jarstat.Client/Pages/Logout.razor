@@ -1,0 +1,17 @@
+﻿@page "/logout"
+
+@layout EmptyLayout
+
+@using Jarstat.Client.Authentication;
+
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navManager
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+        await customAuthStateProvider.UpdateAuthenticationState(null);
+        navManager.NavigateTo("/", true);
+    }
+}

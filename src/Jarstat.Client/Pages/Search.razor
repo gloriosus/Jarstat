@@ -1,0 +1,62 @@
+﻿@page "/"
+@page "/search"
+
+@using Jarstat.Client.Responses
+@using Jarstat.Domain.Shared
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Threading.Tasks
+@using System.Text
+@using System.Text.Json
+@using System.Net.Mime
+@using System.Net
+
+@inject HttpClient Http
+@inject IJSRuntime js
+
+<div class="col-3">
+    <Affix OffsetTop="10">
+        <h6>Классификатор</h6>
+        <Tree Checkable
+              ShowExpand="true"
+              ShowLine="true"
+              DataSource="folders"
+              TitleExpression="x => x.DataItem.DisplayName"
+              KeyExpression="x => x.DataItem.ItemId.ToString()"
+              ChildrenExpression="x => x.DataItem.Children"
+              IsLeafExpression="@(x => x.DataItem.Type.Equals("Document"))"
+              TItem="ItemResponse"
+              @bind-CheckedKeys="checkedKeys"
+              OnCheck="OnFolderCheck"
+              OnNodeLoadDelayAsync="OnNodeLoadDelayAsync"
+              style="background: rgba(0,0,0,0); overflow: auto; height: 81vh;"></Tree>
+    </Affix>
+</div>
+<div class="col-9">
+    <h6>Документы</h6>
+    <Table DataSource="documents"
+           TItem="ItemResponse"
+           Total="_total"
+           @bind-PageIndex="_currentPage"
+           @bind-PageSize="_size"
+           OnChange="OnCurrentPageChange">
+        <PropertyColumn Title="Название документа" Property="i => i.DisplayName">
+            <Space Direction="DirectionVHType.Vertical">
+                <SpaceItem>
+                    @context.DisplayName
+                </SpaceItem>
+                @*<SpaceItem>
+                    <Tag>Тема: социально-экономическое положение Еврейской автономной области</Tag>
+                </SpaceItem>*@
+            </Space>
+        </PropertyColumn>
+        <PropertyColumn Title="Дата создания" Property="i => i.DateTimeCreated" Format="dd.MM.yyyy" />
+        <ActionColumn Title="Действие">
+            <Space>
+                <SpaceItem>
+                    <DownloadButton Icon="@IconType.Outline.Download" Url="@($"api/documents/download/{context.ItemId}")">Скачать</DownloadButton>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </Table>
+</div>

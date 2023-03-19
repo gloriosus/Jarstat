@@ -1,0 +1,69 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>ЦХСД</PageTitle>
+
+<CascadingValue Value="this">
+    <div style="position: relative; min-height: 100vh;">
+        <div class="container" style="padding-bottom: 4rem;">
+            <div class="row mt-4 mb-4">
+                @Body
+            </div>
+        </div>
+    </div>
+    @if (ShowError)
+    {
+    <div class="error-container">
+        <Alert Type="@ErrorType"
+               Message="@ErrorCode"
+               Description="@ErrorMessage"
+               Closable CloseText="Закрыть"
+               OnClose="() => ShowError = false" />
+    </div>
+    }
+</CascadingValue>
+
+@code {
+    private bool showError = false;
+    public bool ShowError
+    {
+        get => showError;
+        set
+        {
+            showError = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorType = AlertType.Warning;
+    public string ErrorType
+    {
+        get => errorType;
+        set
+        {
+            errorType = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorCode = string.Empty;
+    public string ErrorCode
+    {
+        get => errorCode;
+        set
+        {
+            errorCode = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorMessage = string.Empty;
+    public string ErrorMessage
+    {
+        get => errorMessage;
+        set
+        {
+            errorMessage = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+}

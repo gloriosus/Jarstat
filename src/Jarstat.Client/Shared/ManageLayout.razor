@@ -1,0 +1,117 @@
+﻿@inherits LayoutComponentBase
+@layout MainLayout
+
+@using Jarstat.Client.Authentication;
+@using Jarstat.Client.Enums;
+
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navManager
+
+<PageTitle>ЦХСД - администрирование</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <CascadingValue Value="this">
+            <div class="row">
+                <div class="col">
+                    <Menu Mode="MenuMode.Horizontal" style="background: rgba(0,0,0,0);">
+                        <MenuItem RouterLink="/manage/items" RouterMatch="NavLinkMatch.All">Документы</MenuItem>
+                        <MenuItem RouterLink="/manage/users" RouterMatch="NavLinkMatch.All">Пользователи</MenuItem>
+                    </Menu>
+                    @*<ul class="nav nav-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link @(ActiveTab == Tab.Items ? "active" : string.Empty)" href="/manage/items">Документы</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ActiveTab == Tab.Users ? "active" : string.Empty)" href="/manage/users">Пользователи</a>
+                        </li>
+                    </ul>*@
+                </div>
+            </div>
+            <div class="row">
+                @Body
+            </div>
+            @if (ShowError)
+            {
+                <div class="error-container">
+                    <Alert Type="@ErrorType"
+                           Message="@ErrorCode"
+                           Description="@ErrorMessage"
+                           Closable CloseText="Закрыть"
+                           OnClose="() => ShowError = false" />
+                </div>
+            }
+        </CascadingValue>
+    </Authorized>
+    <NotAuthorized>
+        <h1>Вы не авторизованы</h1>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    private Tab activeTab = Tab.Items;
+    public Tab ActiveTab
+    {
+        get => activeTab;
+        set
+        {
+            activeTab = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private bool showError = false;
+    public bool ShowError
+    {
+        get => showError;
+        set
+        {
+            showError = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorType = AlertType.Warning;
+    public string ErrorType
+    {
+        get => errorType;
+        set
+        {
+            errorType = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorCode = string.Empty;
+    public string ErrorCode
+    {
+        get => errorCode;
+        set
+        {
+            errorCode = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorMessage = string.Empty;
+    public string ErrorMessage
+    {
+        get => errorMessage;
+        set
+        {
+            errorMessage = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationState;
+
+        if (!authState.User.Identity!.IsAuthenticated)
+            navManager.NavigateTo("/login", true);
+    }
+}

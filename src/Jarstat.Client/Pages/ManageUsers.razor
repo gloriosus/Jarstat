@@ -1,0 +1,73 @@
+﻿@page "/manage/users"
+
+@layout ManageLayout
+
+@using Jarstat.Client.Responses
+
+@inject HttpClient Http
+@inject IJSRuntime js
+
+<div style="margin-top: 10px; width: 100%;">
+    <AntDesign.Search @bind-Value="searchKey" Placeholder="Поиск пользователя" />
+    <div style="margin-top: 10px; margin-bottom: 10px;">
+        <Button Type="@ButtonType.Primary" OnClick="() => _createUserVisible = true">Создать пользователя</Button>
+    </div>
+    <Table @ref="_table"
+           DataSource="users"
+           TItem="UserResponse"
+           Total="_total"
+           @bind-PageIndex="_currentPage"
+           @bind-PageSize="_size"
+           OnChange="OnCurrentPageChange">
+        <PropertyColumn Title="Имя пользователя" Property="u => u.UserName">
+            <Space>
+                <SpaceItem>
+                    @context.UserName
+                </SpaceItem>
+            @if (LoggedInUserId == context.UserId)
+            {
+                <SpaceItem>
+                    <Tag Color="green">Вы</Tag>
+                </SpaceItem>
+            }
+            </Space>
+        </PropertyColumn>
+        <ActionColumn Title="Пароль">******</ActionColumn>
+        <ActionColumn Title="Действие">
+            <Space>
+                <SpaceItem>
+                    <Button OnClick="() => { updateUserRequest.UserId = context.UserId; _updateUserVisible = true; }">Сменить пароль</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Button Danger OnClick="() => DeleteUser(context.UserId)">Удалить</Button>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </Table>
+    <Modal Title="Создание пользователя"
+           Visible="@_createUserVisible"
+           OnOk="CreateUserOnFinish"
+           OnCancel="() => _createUserVisible = false">
+        <Form Model="createUserRequest">
+            <FormItem>
+                <p>Имя пользователя:</p>
+                <Input @bind-Value="createUserRequest.UserName" AutoFocus="true" />
+            </FormItem>
+            <FormItem>
+                <p>Пароль:</p>
+                <InputPassword @bind-Value="createUserRequest.Password" />
+            </FormItem>
+        </Form>
+    </Modal>
+    <Modal Title="Редактирование пользователя"
+           Visible="@_updateUserVisible"
+           OnOk="UpdateUserOnFinish"
+           OnCancel="() => _updateUserVisible = false">
+        <Form Model="updateUserRequest">
+            <FormItem>
+                <p>Пароль:</p>
+                <InputPassword @bind-Value="updateUserRequest.Password" />
+            </FormItem>
+        </Form>
+    </Modal>
+</div>

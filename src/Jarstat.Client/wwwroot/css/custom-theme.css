@@ -1,0 +1,15 @@
+﻿body {
+    background: #f4f5f9 no-repeat 180% 0/60% fixed url("../g115.svg");
+}
+
+small {
+    font-size: 100%;
+}
+
+a {
+    font-size: 100%;
+}
+
+.ant-tree-show-line .ant-tree-switcher {
+    background: rgba(0,0,0,0);
+}

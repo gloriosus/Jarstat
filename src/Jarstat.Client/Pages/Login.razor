@@ -1,0 +1,71 @@
+﻿@page "/login"
+
+@layout EmptyLayout
+
+@using System.Net
+@using Jarstat.Client.Authentication
+@using Jarstat.Client.Requests;
+@using Jarstat.Domain.Shared;
+
+@inject HttpClient httpClient
+@inject IJSRuntime js
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navManager
+
+<div class="col-lg-4 offset-lg-4 pt-4 pb-4">
+    <Form Model="@loginRequest" OnFinish="Authenticate" LabelColSpan="8" WrapperColSpan="16">
+        <div class="mb-3 text-center">
+            <h3>Аутентификация</h3>
+        </div>
+        <FormItem Label="Имя пользователя">
+            <Input @bind-Value="loginRequest.UserName" @ref="UsernameInput" />
+        </FormItem>
+        <FormItem Label="Пароль">
+            <InputPassword @bind-Value="loginRequest.Password" />
+        </FormItem>
+        <FormItem WrapperColOffset="8" WrapperColSpan="16">
+            <Button Type="@ButtonType.Primary" HtmlType="submit">Войти</Button>
+        </FormItem>
+    </Form>
+</div>
+
+@code {
+    [CascadingParameter]
+    public EmptyLayout Layout { get; set; }
+
+    private LoginUserRequest loginRequest = new();
+    private Input<string> UsernameInput;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            if (UsernameInput is not null)
+                await UsernameInput.Focus();
+    }
+
+    private async Task Authenticate()
+    {
+        var loginResponse = await httpClient.PostAsJsonAsync<LoginUserRequest>("api/users/login", loginRequest);
+
+        if (loginResponse.IsSuccessStatusCode)
+        {
+            var result = await loginResponse.Content.ReadFromJsonAsync<Result<UserSession?>>();
+            var userSession = result?.Value!;
+            var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+            await customAuthStateProvider.UpdateAuthenticationState(userSession);
+
+            navManager.NavigateTo("/manage/items", true);
+        }
+        else if (loginResponse.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            var result = await loginResponse.Content.ReadFromJsonAsync<Result<UserSession?>>();
+
+            Layout.ErrorType = AlertType.Error;
+            Layout.ErrorCode = result!.Error.Code;
+            Layout.ErrorMessage = result!.Error.Message;
+            Layout.ShowError = true;
+
+            return;
+        }
+    }
+}

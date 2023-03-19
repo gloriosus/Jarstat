@@ -1,0 +1,123 @@
+﻿@inherits LayoutComponentBase
+
+@using Jarstat.Client.Models
+@using Jarstat.Client.Services
+
+@inject NavigationManager navManager
+@inject IJSRuntime js
+
+<PageTitle>ЦХСД</PageTitle>
+
+<CascadingValue Value="this">
+    <div style="position: relative; min-height: 100vh;">
+        <div class="container" style="padding-bottom: 4rem;">
+            <div class="row">
+                <nav class="navbar navbar-expand-lg" >
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#"><img src="/jarstat.png" alt="ЦХСД" width="32" height="32"> Центр хранения статистических данных</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-5">
+                                <li class="nav-item">
+                                @if (!navManager.Uri.Substring(navManager.BaseUri.Length).ToLower().Contains("manage"))
+                                {
+                                    <EditForm class="d-flex" role="search" Model="SearchModel" OnSubmit="Search">
+                                        <Input Placeholder="Название документа" AllowClear OnChange="ClearInput" TValue="string" Size="default" @bind-Value="SearchModel.DocumentName" style="width: 450px;" />
+                                        <Button Type="@ButtonType.Primary" HtmlType="submit">Поиск</Button>
+                                    </EditForm>
+                                }
+                                </li>
+                            </ul>
+                            <a class="nav-link active link-primary" aria-current="page" href="/manage/items"><u>Администратор</u></a>
+                            <AuthorizeView>
+                                <Authorized>
+                                    <a class="nav-link active link-primary ms-2" aria-current="page" href="/logout"><u>Выход</u></a>
+                                </Authorized>
+                            </AuthorizeView>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <div class="row mt-4 mb-4">
+                @Body
+            </div>
+        </div>
+        <footer style="position: absolute; bottom: 0; width: 100%; height: 4rem;">
+            <p class="text-center text-muted border-top py-3" style="font-size: 15px;">&copy; @DateTime.UtcNow.Year Департамент цифрового развития и связи Еврейской автономной области</p>
+        </footer>
+    </div>
+    @if (ShowError)
+    {
+        <div class="error-container">
+            <Alert Type="@ErrorType"
+                   Message="@ErrorCode"
+                   Description="@ErrorMessage"
+                   Closable CloseText="Закрыть"
+                   OnClose="() => ShowError = false" />
+        </div>
+    }
+</CascadingValue>
+
+@code {
+    private void ClearInput(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            Search();
+    }
+
+    public SearchDocumentsModel SearchModel { get; set; } = new();
+
+    [Inject] 
+    private NotifyStateService? notifyStateService { get; set; }
+
+    private void Search()
+    {
+        notifyStateService!.NotifyEventClick(this);
+    }
+
+    private bool showError = false;
+    public bool ShowError
+    {
+        get => showError;
+        set
+        {
+            showError = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorType = AlertType.Warning;
+    public string ErrorType
+    {
+        get => errorType;
+        set
+        {
+            errorType = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorCode = string.Empty;
+    public string ErrorCode
+    {
+        get => errorCode;
+        set
+        {
+            errorCode = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+    private string errorMessage = string.Empty;
+    public string ErrorMessage
+    {
+        get => errorMessage;
+        set
+        {
+            errorMessage = value;
+            InvokeAsync(() => StateHasChanged());
+        }
+    }
+}
