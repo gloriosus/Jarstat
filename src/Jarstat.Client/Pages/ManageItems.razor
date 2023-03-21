@@ -16,7 +16,7 @@
         <Button Type="@ButtonType.Primary" Disabled="@CreateDocumentButtonDisabled" OnClick="CreateDocumentOnButtonClick">Создать документ</Button>
         <Button Type="@ButtonType.Default" Disabled="@EditButtonDisabled" OnClick="EditOnButtonClick">Изменить</Button>
         <Button Type="@ButtonType.Default" Danger Disabled="@DeleteButtonDisabled" OnClick="DeleteOnButtonClick">Удалить</Button>
-        <Button Type="@ButtonType.Link" Disabled="@DownloadButtonDisabled" OnClick="DownloadOnButtonClick">Скачать файл</Button>
+        <DownloadButton Type="@ButtonType.Link" Disabled="@DownloadButtonDisabled" Url="@(selectedItem is null ? "#" : $"api/documents/download/{selectedItem.ItemId}")">Скачать</DownloadButton>
     </div>
     <Tree @ref="_tree"
           DataSource="items"
@@ -30,7 +30,6 @@
 	      ShowLeafIcon="true"
           SearchValue="@searchKey"
           SearchExpression="x => x.DataItem.DisplayName.ToLower().Contains(searchKey.ToLower())"
-          OnDblClick="DownloadOnTreeNodeDoubleClick"
           Draggable 
           OnDrop="MoveItemOnDrop"
           ExpandedKeys="expandedKeys"

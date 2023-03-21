@@ -187,20 +187,6 @@ public partial class ManageItems
         }
     }
 
-    #region Download
-    private async Task DownloadOnTreeNodeDoubleClick(TreeEventArgs<ItemResponse> e)
-    {
-        if (e.Node.DataItem.Type.Equals("Document"))
-            await js.InvokeVoidAsync("triggerFileDownload", $"/api/documents/download/{e.Node.DataItem.ItemId}");
-    }
-
-    private async Task DownloadOnButtonClick(MouseEventArgs e)
-    {
-        if (selectedItem is not null)
-            await js.InvokeVoidAsync("triggerFileDownload", $"/api/documents/download/{selectedItem.ItemId}");
-    }
-    #endregion
-
     #region DeleteItem
     private async Task DeleteOnButtonClick(MouseEventArgs e)
     {
