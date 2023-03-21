@@ -95,11 +95,13 @@ public partial class ManageItems
     {
         var selectedItem = e.Node.DataItem;
         var targetItem = e.TargetNode.DataItem;
+        var dropPosition = e.TargetNode.Expanded ? DropPosition.Inside : DropPosition.Below;
 
         var changeItemPositionRequest = new ChangeItemPositionRequest
         {
             ItemId = selectedItem.ItemId,
-            TargetItemId = targetItem.ItemId
+            TargetItemId = targetItem.ItemId,
+            DropPosition = dropPosition
         };
 
         var response = await Http.PostAsJsonAsync("api/items/move", changeItemPositionRequest);
