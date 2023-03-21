@@ -124,7 +124,7 @@ public partial class ManageItems
                 reloadItemId = (Guid)targetItem.ParentId!;
                 break;
             case "Folder":
-                reloadItemId = targetItem.ItemId;
+                reloadItemId = (Guid)targetItem.ParentId!;
                 break;
         }
 
