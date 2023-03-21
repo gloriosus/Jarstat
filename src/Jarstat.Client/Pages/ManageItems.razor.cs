@@ -12,6 +12,7 @@ using Jarstat.Client.Requests;
 using Microsoft.AspNetCore.Components.Web;
 using System.Reflection.Metadata;
 using Microsoft.AspNetCore.Components.Forms;
+using Jarstat.Client.Extensions;
 
 namespace Jarstat.Client.Pages;
 
@@ -74,21 +75,19 @@ public partial class ManageItems
     }
 
     #region LoadTreeData
-    private async Task ReloadChildren(TreeNode<ItemResponse> node)
+    private async Task ReloadChildren(ItemResponse itemResponse)
     {
-        var dataItem = node.DataItem;
-        dataItem.Children.Clear();
-
-        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{dataItem.ItemId}");
+        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{itemResponse.ItemId}");
         var children = result?.Value!;
 
+        itemResponse.Children.Clear();
         foreach (var child in children)
-            dataItem.Children.Add(child);
+            itemResponse.Children.Add(child);
     }
 
     private async Task OnNodeLoadDelayAsync(TreeEventArgs<ItemResponse> args)
     {
-        await ReloadChildren(args.Node);
+        await ReloadChildren(args.Node.DataItem);
     }
     #endregion
 
@@ -100,7 +99,7 @@ public partial class ManageItems
         var changeItemPositionRequest = new ChangeItemPositionRequest
         {
             ItemId = selectedItem.ItemId,
-            TargetItemId = targetItem.ItemId,
+            TargetItemId = targetItem.ItemId
         };
 
         var response = await Http.PostAsJsonAsync("api/items/move", changeItemPositionRequest);
@@ -129,8 +128,11 @@ public partial class ManageItems
                 break;
         }
 
-        var targetNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == reloadItemId);
-        await ReloadChildren(targetNode);
+        var itemToReload = await items.FindItemResponseOrDefaultAsync(reloadItemId);
+        if (itemToReload is null) 
+            return;
+
+        await ReloadChildren(itemToReload);
     }
 
     private async Task UpdateStateOnExpandChanged(TreeEventArgs<ItemResponse> e)
@@ -221,8 +223,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parentNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ParentId);
-            await ReloadChildren(parentNode);
+            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
 
@@ -330,8 +335,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parentNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ParentId);
-            await ReloadChildren(parentNode);
+            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
 
@@ -419,8 +427,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parentNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ParentId);
-            await ReloadChildren(parentNode);
+            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
 
@@ -513,8 +524,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var node = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ItemId);
-            await ReloadChildren(node);
+            var parent = await items.FindItemResponseOrDefaultAsync(selectedItem.ItemId);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
     #endregion
@@ -607,8 +621,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var node = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ItemId);
-            await ReloadChildren(node);
+            var parent = await items.FindItemResponseOrDefaultAsync(selectedItem.ItemId);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
     #endregion
