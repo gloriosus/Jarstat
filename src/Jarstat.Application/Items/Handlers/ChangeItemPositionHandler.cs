@@ -101,23 +101,24 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
     {
         var items = await _itemRepository.GetAllAsync();
         var newSortOrder = items
-            .Where(i => i.ParentId == targetItem.Id)
+            .Where(i => i.ParentId == targetItem.ParentId)
             .OrderBy(i => i.SortOrder)
-            .Take(1)
+            .SkipWhile(i => i.Id != targetItem.Id)
+            .Take(2)
             .Select(i => i.SortOrder / 2)
             .Sum();
 
         var document = await _documentRepository.GetByIdAsync(item.Id);
 
-        if (item.ParentId == targetItem.Id)
+        if (item.ParentId == targetItem.ParentId)
         {
             var updatedDocument = document.ChangeSortOrder(newSortOrder);
             var result = _documentRepository.Update(updatedDocument.Value!);
         }
         
-        if (item.ParentId != targetItem.Id)
+        if (item.ParentId != targetItem.ParentId)
         {
-            var folder = await _folderRepository.GetByIdAsync((Guid)targetItem.Id!);
+            var folder = await _folderRepository.GetByIdAsync((Guid)targetItem.ParentId!);
             var updatedDocument = document.Update(document.DisplayName, document.FileName, folder!, document.Description, document.LastUpdater, document.FileId);
             var orderedDocument = updatedDocument.Value!.ChangeSortOrder(newSortOrder);
             var result = _documentRepository.Update(orderedDocument.Value!);
@@ -185,23 +186,24 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
 
         var items = await _itemRepository.GetAllAsync();
         var newSortOrder = items
-            .Where(i => i.ParentId == targetItem.Id)
+            .Where(i => i.ParentId == targetItem.ParentId)
             .OrderBy(i => i.SortOrder)
-            .Take(1)
+            .SkipWhile(i => i.Id != targetItem.Id)
+            .Take(2)
             .Select(i => i.SortOrder / 2)
             .Sum();
 
         var folder = await _folderRepository.GetByIdAsync(item.Id);
 
-        if (item.ParentId == targetItem.Id)
+        if (item.ParentId == targetItem.ParentId)
         {
             var updatedFolder = folder.ChangeSortOrder(newSortOrder);
             var result = _folderRepository.Update(updatedFolder.Value!);
         }
 
-        if (item.ParentId != targetItem.Id)
+        if (item.ParentId != targetItem.ParentId)
         {
-            var parentFolder = await _folderRepository.GetByIdAsync((Guid)targetItem.Id!);
+            var parentFolder = await _folderRepository.GetByIdAsync((Guid)targetItem.ParentId!);
             var updatedFolder = folder.Update(folder.DisplayName, folder.VirtualPath, parentFolder!, folder.LastUpdater);
             var orderedFolder = updatedFolder.Value!.ChangeSortOrder(newSortOrder);
             var result = _folderRepository.Update(orderedFolder.Value!);
