@@ -31,44 +31,46 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
 
     public async Task<bool> Handle(ChangeItemPositionCommand request, CancellationToken cancellationToken)
     {
-        var item = await _itemRepository.GetByIdAsync(request.ItemId);
-        var targetItem = await _itemRepository.GetByIdAsync(request.TargetItemId);
+        var items = await _itemRepository.GetAllAsync();
+        var moveableItem = items.FirstOrDefault(i => i.Id == request.ItemId);
+        var targetItem = items.FirstOrDefault(i => i.Id == request.TargetItemId);
 
-        if (item is null || targetItem is null)
+        if (moveableItem is null || targetItem is null)
             return false;
 
-        var items = await _itemRepository.GetAllAsync();
+        var targetItemParentId = GetParentId(targetItem, request.DropPosition);
+        var itemsInFolder = GetFolderItems(targetItemParentId, items);
+        var targetItemIsLastElement = IsTargetLast(targetItem, itemsInFolder, request.DropPosition);
 
-        var parentId = GetParentId(targetItem, request.DropPosition);
-        var folderItems = GetFolderItems(parentId, items);
-        var isTargetLast = IsTargetLast(targetItem, folderItems, request.DropPosition);
+        double sortOrder = targetItemIsLastElement ? long.MaxValue : GetSortOrder(targetItem, itemsInFolder, request.DropPosition);
 
-        double sortOrder = isTargetLast ? long.MaxValue : GetSortOrder(targetItem, folderItems, request.DropPosition);
+        await ReorderItem(moveableItem, targetItemParentId, sortOrder);
 
-        await ReorderItem(item, parentId, sortOrder);
-
-        if (isTargetLast)
-        {
-            var documents = await _documentRepository.GetAllAsync();
-            var documentsInFolder = documents.Where(d => d.FolderId == targetItem.ParentId && d.Id != item.Id);
-            foreach (var downgradeDocument in documentsInFolder)
-            {
-                downgradeDocument.ChangeSortOrder(downgradeDocument.SortOrder / 2);
-                _documentRepository.Update(downgradeDocument);
-            }
-
-            var folders = await _folderRepository.GetAllAsync();
-            var foldersInFolder = folders.Where(f => f.ParentId == targetItem.ParentId && f.Id != item.Id);
-            foreach (var downgradeFolder in foldersInFolder)
-            {
-                downgradeFolder.ChangeSortOrder(downgradeFolder.SortOrder / 2);
-                _folderRepository.Update(downgradeFolder);
-            }
-        }
+        if (targetItemIsLastElement)
+            await DowngradeItemsAbove(moveableItem, targetItemParentId);
 
         await _unitOfWork.SaveChangesAsync(default);
 
         return false;
+    }
+
+    private async Task DowngradeItemsAbove(Item item, Guid parentId)
+    {
+        var documents = await _documentRepository.GetAllAsync();
+        var documentsInFolder = documents.Where(d => d.FolderId == parentId && d.Id != item.Id);
+        foreach (var downgradeDocument in documentsInFolder)
+        {
+            downgradeDocument.ChangeSortOrder(downgradeDocument.SortOrder / 2);
+            _documentRepository.Update(downgradeDocument);
+        }
+
+        var folders = await _folderRepository.GetAllAsync();
+        var foldersInFolder = folders.Where(f => f.ParentId == parentId && f.Id != item.Id);
+        foreach (var downgradeFolder in foldersInFolder)
+        {
+            downgradeFolder.ChangeSortOrder(downgradeFolder.SortOrder / 2);
+            _folderRepository.Update(downgradeFolder);
+        }
     }
 
     private async Task ReorderItem(Item item, Guid parentId, double sortOrder)
