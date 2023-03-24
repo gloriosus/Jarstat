@@ -107,22 +107,35 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         }
     }
 
-    private async Task ReorderFolder(Item item, Guid parentId, double sortOrder)
+    private async Task<Result<Folder?>> ReorderFolder(Item folderItem, Guid targetItemParentId, double sortOrder)
     {
-        var folder = await _folderRepository.GetByIdAsync(item.Id);
+        var folder = (await _folderRepository.GetByIdAsync(folderItem.Id))!;
 
-        if (item.ParentId == parentId)
+        if (folder.ParentId.Equals(targetItemParentId))
         {
-            var orderedFolder = folder!.ChangeSortOrder(sortOrder);
-            _folderRepository.Update(orderedFolder.Value!);
+            var folderOrderingResult = folder.ChangeSortOrder(sortOrder);
+            if (folderOrderingResult.IsFailure)
+                return folderOrderingResult;
+
+            var orderedFolder = folderOrderingResult.Value!;
+            return _folderRepository.Update(orderedFolder);
         }
-
-        if (item.ParentId != parentId)
+        else
         {
-            var targetFolder = await _folderRepository.GetByIdAsync(parentId);
-            var movedFolder = folder!.Update(folder.DisplayName, folder.VirtualPath, targetFolder!, folder.LastUpdater);
-            var orderedFolder = movedFolder.Value!.ChangeSortOrder(sortOrder);
-            _folderRepository.Update(orderedFolder.Value!);
+            var targetFolder = (await _folderRepository.GetByIdAsync(targetItemParentId))!;
+
+            var folderMovingResult = folder.Update(folder.DisplayName, folder.VirtualPath, targetFolder, folder.LastUpdater);
+            if (folderMovingResult.IsFailure)
+                return folderMovingResult;
+
+            var movedFolder = folderMovingResult.Value!;
+
+            var folderOrderingResult = movedFolder.ChangeSortOrder(sortOrder);
+            if (folderOrderingResult.IsFailure)
+                return folderOrderingResult;
+
+            var orderedFolder = folderOrderingResult.Value!;
+            return _folderRepository.Update(orderedFolder);
         }
     }
 
