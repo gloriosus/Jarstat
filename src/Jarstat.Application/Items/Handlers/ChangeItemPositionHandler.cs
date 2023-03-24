@@ -44,9 +44,9 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
 
         var targetItemParentId = GetParentId(targetItem, request.DropPosition);
         var itemsInFolder = GetFolderItems(targetItemParentId, items);
-        var targetItemIsLastElement = IsTargetLast(targetItem, itemsInFolder, request.DropPosition);
+        var targetItemIsLastElement = IsLastElement(targetItem, itemsInFolder, request.DropPosition);
 
-        double sortOrder = targetItemIsLastElement ? long.MaxValue : GetSortOrder(targetItem, itemsInFolder, request.DropPosition);
+        double sortOrder = targetItemIsLastElement ? long.MaxValue : NewSortOrder(targetItem, itemsInFolder, request.DropPosition);
 
         var reorderingResult = await ReorderItem(moveableItem, targetItemParentId, sortOrder);
         if (reorderingResult.IsFailure)
@@ -214,7 +214,7 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         items.Where(i => i.ParentId == parentId)
              .OrderBy(i => i.SortOrder);
 
-    private bool IsTargetLast(Item targetItem, IEnumerable<Item> folderItems, DropPosition dropPosition) =>
+    private bool IsLastElement(Item targetItem, IEnumerable<Item> folderItems, DropPosition dropPosition) =>
         dropPosition switch
         {
             DropPosition.Below => folderItems.SkipWhile(i => i.Id != targetItem.Id)
@@ -223,7 +223,7 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
             _ => throw new ArgumentException("Недопустимое значение параметра", nameof(dropPosition))
         };
 
-    private double GetSortOrder(Item targetItem, IEnumerable<Item> folderItems, DropPosition dropPosition) =>
+    private double NewSortOrder(Item targetItem, IEnumerable<Item> folderItems, DropPosition dropPosition) =>
         dropPosition switch
         {
             DropPosition.Below => folderItems.SkipWhile(i => i.Id != targetItem.Id)
