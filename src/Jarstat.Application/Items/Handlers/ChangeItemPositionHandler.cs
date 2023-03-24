@@ -35,12 +35,12 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         var targetItem = items.FirstOrDefault(i => i.Id == request.TargetItemId);
 
         if (moveableItem is null)
-            return Result<Item?>.Failure(DomainErrors.ArgumentNullValue
-                .WithParameters(nameof(moveableItem), typeof(Item).ToString()));
+            return Result<Item?>.Failure(DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.ItemId), typeof(Guid).ToString(), request.ItemId.ToString()));
 
         if (targetItem is null)
-            return Result<Item?>.Failure(DomainErrors.ArgumentNullValue
-                .WithParameters(nameof(targetItem), typeof(Item).ToString()));
+            return Result<Item?>.Failure(DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.TargetItemId), typeof(Guid).ToString(), request.TargetItemId.ToString()));
 
         var targetItemParentId = GetParentId(targetItem, request.DropPosition);
         var itemsInFolder = GetFolderItems(targetItemParentId, items);
