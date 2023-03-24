@@ -1,12 +1,9 @@
 ﻿using Jarstat.Application.Commands;
 using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
-using Jarstat.Domain.Errors;
 using Jarstat.Domain.Records;
 using Jarstat.Domain.Shared;
 using MediatR;
-using System.Reflection.Metadata;
-using System.Threading;
 
 namespace Jarstat.Application.Handlers;
 
@@ -88,22 +85,35 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         }
     }
 
-    private async Task ReorderDocument(Item item, Guid parentId, double sortOrder)
+    private async Task<Result<Document?>> ReorderDocument(Item documentItem, Guid targetItemParentId, double sortOrder)
     {
-        var document = await _documentRepository.GetByIdAsync(item.Id);
+        var document = (await _documentRepository.GetByIdAsync(documentItem.Id))!;
 
-        if (item.ParentId == parentId)
+        if (document.FolderId.Equals(targetItemParentId))
         {
-            var orderedDocument = document!.ChangeSortOrder(sortOrder);
-            _documentRepository.Update(orderedDocument.Value!);
+            var documentOrderingResult = document.ChangeSortOrder(sortOrder);
+            if (documentOrderingResult.IsFailure)
+                return documentOrderingResult;
+
+            var orderedDocument = documentOrderingResult.Value!;
+            return _documentRepository.Update(orderedDocument);
         }
-
-        if (item.ParentId != parentId)
+        else
         {
-            var targetFolder = await _folderRepository.GetByIdAsync(parentId);
-            var movedDocument = document!.Update(document.DisplayName, document.FileName, targetFolder!, document.Description, document.LastUpdater, document.FileId);
-            var orderedDocument = movedDocument.Value!.ChangeSortOrder(sortOrder);
-            _documentRepository.Update(orderedDocument.Value!);
+            var targetFolder = (await _folderRepository.GetByIdAsync(targetItemParentId))!;
+
+            var documentMovingResult = document.Update(document.DisplayName, document.FileName, targetFolder, document.Description, document.LastUpdater, document.FileId);
+            if (documentMovingResult.IsFailure)
+                return documentMovingResult;
+
+            var movedDocument = documentMovingResult.Value!;
+
+            var documentOrderingResult = movedDocument.ChangeSortOrder(sortOrder);
+            if (documentOrderingResult.IsFailure)
+                return documentOrderingResult;
+
+            var orderedDocument = documentOrderingResult.Value!;
+            return _documentRepository.Update(orderedDocument);
         }
     }
 
