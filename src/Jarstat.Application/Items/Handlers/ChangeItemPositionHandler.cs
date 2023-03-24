@@ -1,13 +1,14 @@
 ﻿using Jarstat.Application.Commands;
 using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
+using Jarstat.Domain.Errors;
 using Jarstat.Domain.Records;
 using Jarstat.Domain.Shared;
 using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionCommand, bool>
+public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionCommand, Result<Item?>>
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IFolderRepository _folderRepository;
@@ -26,14 +27,19 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<bool> Handle(ChangeItemPositionCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Item?>> Handle(ChangeItemPositionCommand request, CancellationToken cancellationToken)
     {
         var items = await _itemRepository.GetAllAsync();
         var moveableItem = items.FirstOrDefault(i => i.Id == request.ItemId);
         var targetItem = items.FirstOrDefault(i => i.Id == request.TargetItemId);
 
-        if (moveableItem is null || targetItem is null)
-            return false;
+        if (moveableItem is null)
+            return Result<Item?>.Failure(DomainErrors.ArgumentNullValue
+                .WithParameters(nameof(moveableItem), typeof(Item).ToString()));
+
+        if (targetItem is null)
+            return Result<Item?>.Failure(DomainErrors.ArgumentNullValue
+                .WithParameters(nameof(targetItem), typeof(Item).ToString()));
 
         var targetItemParentId = GetParentId(targetItem, request.DropPosition);
         var itemsInFolder = GetFolderItems(targetItemParentId, items);
@@ -41,14 +47,14 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
 
         double sortOrder = targetItemIsLastElement ? long.MaxValue : GetSortOrder(targetItem, itemsInFolder, request.DropPosition);
 
-        await ReorderItem(moveableItem, targetItemParentId, sortOrder);
+        var result = await ReorderItem(moveableItem, targetItemParentId, sortOrder);
 
         if (targetItemIsLastElement)
             await DowngradeItemsAbove(moveableItem, targetItemParentId);
 
         await _unitOfWork.SaveChangesAsync(default);
 
-        return false;
+        return result;
     }
 
     private async Task DowngradeItemsAbove(Item item, Guid parentId)
@@ -70,18 +76,20 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         }
     }
 
-    private async Task ReorderItem(Item item, Guid parentId, double sortOrder)
+    private async Task<Result<Item?>> ReorderItem(Item item, Guid targetItemParentId, double sortOrder)
     {
         switch (item.Type)
         {
             case "Document":
-                await ReorderDocument(item, parentId, sortOrder);
-                break;
+                var documentResult = await ReorderDocument(item, targetItemParentId, sortOrder);
+                var document = documentResult.Value;
+                return new Result<Item?>((Item?)document, documentResult.IsSuccess, documentResult.Error);
             case "Folder":
-                await ReorderFolder(item, parentId, sortOrder);
-                break;
+                var folderResult = await ReorderFolder(item, targetItemParentId, sortOrder);
+                var folder = folderResult.Value;
+                return new Result<Item?>((Item?)folder, folderResult.IsSuccess, folderResult.Error);
             default:
-                throw new ArgumentException("Неверное значение параметра", nameof(item.Type));
+                throw new ArgumentException("Недопустимое значение параметра", nameof(item.Type));
         }
     }
 

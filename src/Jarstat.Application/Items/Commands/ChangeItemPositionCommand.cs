@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class ChangeItemPositionCommand : IRequest<bool>
+public class ChangeItemPositionCommand : IRequest<Result<Item?>>
 {
     public Guid ItemId { get; set; }
     public Guid TargetItemId { get; set; }
