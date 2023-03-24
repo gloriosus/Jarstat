@@ -5,6 +5,7 @@ using Jarstat.Domain.Errors;
 using Jarstat.Domain.Records;
 using Jarstat.Domain.Shared;
 using MediatR;
+using Microsoft.EntityFrameworkCore.Update;
 
 namespace Jarstat.Application.Handlers;
 
@@ -47,33 +48,67 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
 
         double sortOrder = targetItemIsLastElement ? long.MaxValue : GetSortOrder(targetItem, itemsInFolder, request.DropPosition);
 
-        var result = await ReorderItem(moveableItem, targetItemParentId, sortOrder);
+        var reorderingResult = await ReorderItem(moveableItem, targetItemParentId, sortOrder);
+        if (reorderingResult.IsFailure)
+            return reorderingResult;
 
         if (targetItemIsLastElement)
-            await DowngradeItemsAbove(moveableItem, targetItemParentId);
+        {
+            var downgradingResult = await DowngradeItemsAbove(moveableItem, targetItemParentId);
+            if (downgradingResult.IsFailure)
+                return downgradingResult;
+        }
 
         await _unitOfWork.SaveChangesAsync(default);
 
-        return result;
+        return reorderingResult;
     }
 
-    private async Task DowngradeItemsAbove(Item item, Guid parentId)
+    private async Task<Result<Item?>> DowngradeItemsAbove(Item moveableItem, Guid targetItemParentId)
     {
-        var documents = await _documentRepository.GetAllAsync();
-        var documentsInFolder = documents.Where(d => d.FolderId == parentId && d.Id != item.Id);
-        foreach (var downgradeDocument in documentsInFolder)
+        var documentResult = await DowngradeDocumentsAbove(moveableItem, targetItemParentId);
+        if (documentResult.IsFailure)
+            return Result<Item?>.Failure(documentResult.Error);
+
+        var folderResult = await DowngradeFoldersAbove(moveableItem, targetItemParentId);
+        if (folderResult.IsFailure)
+            return Result<Item?>.Failure(folderResult.Error);
+
+        return Result<Item?>.Success(default);
+    }
+
+    private async Task<Result<Document?>> DowngradeDocumentsAbove(Item moveableItem, Guid targetItemParentId)
+    {
+        var documentsInFolder = (await _documentRepository.GetByFolderId(targetItemParentId))
+                                                          .Where(d => d.Id != moveableItem.Id);
+        foreach (var document in documentsInFolder)
         {
-            downgradeDocument.ChangeSortOrder(downgradeDocument.SortOrder / 2);
-            _documentRepository.Update(downgradeDocument);
+            var documentOrderingResult = document.ChangeSortOrder(document.SortOrder / 2);
+            if (documentOrderingResult.IsFailure)
+                return documentOrderingResult;
+
+            var orderedDocument = documentOrderingResult.Value!;
+            _documentRepository.Update(orderedDocument);
         }
 
-        var folders = await _folderRepository.GetAllAsync();
-        var foldersInFolder = folders.Where(f => f.ParentId == parentId && f.Id != item.Id);
-        foreach (var downgradeFolder in foldersInFolder)
+        return Result<Document?>.Success(default);
+    }
+
+    private async Task<Result<Folder?>> DowngradeFoldersAbove(Item moveableItem, Guid targetItemParentId)
+    {
+        var foldersInFolder = (await _folderRepository.GetByParentId(targetItemParentId))
+                                                          .Where(d => d.Id != moveableItem.Id);
+        foreach (var folder in foldersInFolder)
         {
-            downgradeFolder.ChangeSortOrder(downgradeFolder.SortOrder / 2);
-            _folderRepository.Update(downgradeFolder);
+            var folderOrderingResult = folder.ChangeSortOrder(folder.SortOrder / 2);
+            if (folderOrderingResult.IsFailure)
+                return folderOrderingResult;
+
+            var orderedFolder = folderOrderingResult.Value!;
+            _folderRepository.Update(orderedFolder);
         }
+
+        return Result<Folder?>.Success(default);
     }
 
     private async Task<Result<Item?>> ReorderItem(Item item, Guid targetItemParentId, double sortOrder)

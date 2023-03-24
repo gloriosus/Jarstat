@@ -58,4 +58,15 @@ public class FolderRepository : IFolderRepository
         var result = _dbContext.Set<Folder>().Remove(folder);
         return result.Entity;
     }
+
+    public async Task<List<Folder>> GetByParentId(Guid? parentId)
+    {
+        var result = await _dbContext.Set<Folder>()
+            .Include(f => f.Creator)
+            .Include(f => f.LastUpdater)
+            .Where(f => f.ParentId.Equals(parentId))
+            .ToListAsync();
+
+        return result;
+    }
 }
