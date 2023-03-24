@@ -207,7 +207,7 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         {
             DropPosition.Below => (Guid)targetItem.ParentId!,
             DropPosition.Inside => targetItem.Id,
-            _ => throw new ArgumentException("Неверное значение параметра", nameof(dropPosition))
+            _ => throw new ArgumentException("Недопустимое значение параметра", nameof(dropPosition))
         };
 
     private IEnumerable<Item> GetFolderItems(Guid parentId, IList<Item> items) =>
@@ -220,7 +220,7 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
             DropPosition.Below => folderItems.SkipWhile(i => i.Id != targetItem.Id)
                                              .Count() > 1 ? false : true,
             DropPosition.Inside => folderItems.Any() ? false : true,
-            _ => throw new ArgumentException("Неверное значение параметра", nameof(dropPosition))
+            _ => throw new ArgumentException("Недопустимое значение параметра", nameof(dropPosition))
         };
 
     private double GetSortOrder(Item targetItem, IEnumerable<Item> folderItems, DropPosition dropPosition) =>
@@ -233,6 +233,6 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
             DropPosition.Inside => folderItems.Take(1)
                                               .Select(i => i.SortOrder / 2)
                                               .Sum(),
-            _ => throw new ArgumentException("Неверное значение параметра", nameof(dropPosition))
+            _ => throw new ArgumentException("Недопустимое значение параметра", nameof(dropPosition))
         };
 }
