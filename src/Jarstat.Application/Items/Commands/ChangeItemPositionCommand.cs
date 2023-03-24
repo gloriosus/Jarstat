@@ -9,7 +9,4 @@ public class ChangeItemPositionCommand : IRequest<Result<Item?>>
     public Guid ItemId { get; set; }
     public Guid TargetItemId { get; set; }
     public DropPosition DropPosition { get; set; }
-    //public string ItemType { get; set; } = null!;
-    //public Guid ParentId { get; set; }
-    //public double SortOrder { get; set; }
 }
