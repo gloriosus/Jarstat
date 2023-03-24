@@ -52,35 +52,37 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         if (reorderingResult.IsFailure)
             return reorderingResult;
 
+        var reorderedItem = reorderingResult.Value!;
+
         if (targetItemIsLastElement)
         {
-            var downgradingResult = await DowngradeItemsAbove(moveableItem, targetItemParentId);
+            var downgradingResult = await DowngradeItemsAbove(reorderedItem, targetItemParentId);
             if (downgradingResult.IsFailure)
                 return downgradingResult;
         }
 
         await _unitOfWork.SaveChangesAsync(default);
 
-        return reorderingResult;
+        return reorderedItem;
     }
 
-    private async Task<Result<Item?>> DowngradeItemsAbove(Item moveableItem, Guid targetItemParentId)
+    private async Task<Result<Item?>> DowngradeItemsAbove(Item reorderedItem, Guid targetItemParentId)
     {
-        var documentResult = await DowngradeDocumentsAbove(moveableItem, targetItemParentId);
+        var documentResult = await DowngradeDocumentsAbove(reorderedItem, targetItemParentId);
         if (documentResult.IsFailure)
             return Result<Item?>.Failure(documentResult.Error);
 
-        var folderResult = await DowngradeFoldersAbove(moveableItem, targetItemParentId);
+        var folderResult = await DowngradeFoldersAbove(reorderedItem, targetItemParentId);
         if (folderResult.IsFailure)
             return Result<Item?>.Failure(folderResult.Error);
 
         return Result<Item?>.Success(default);
     }
 
-    private async Task<Result<Document?>> DowngradeDocumentsAbove(Item moveableItem, Guid targetItemParentId)
+    private async Task<Result<Document?>> DowngradeDocumentsAbove(Item reorderedItem, Guid targetItemParentId)
     {
         var documentsInFolder = (await _documentRepository.GetByFolderId(targetItemParentId))
-                                                          .Where(d => d.Id != moveableItem.Id);
+                                                          .Where(d => d.Id != reorderedItem.Id);
         foreach (var document in documentsInFolder)
         {
             var documentOrderingResult = document.ChangeSortOrder(document.SortOrder / 2);
@@ -94,10 +96,10 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         return Result<Document?>.Success(default);
     }
 
-    private async Task<Result<Folder?>> DowngradeFoldersAbove(Item moveableItem, Guid targetItemParentId)
+    private async Task<Result<Folder?>> DowngradeFoldersAbove(Item reorderedItem, Guid targetItemParentId)
     {
         var foldersInFolder = (await _folderRepository.GetByParentId(targetItemParentId))
-                                                          .Where(d => d.Id != moveableItem.Id);
+                                                          .Where(d => d.Id != reorderedItem.Id);
         foreach (var folder in foldersInFolder)
         {
             var folderOrderingResult = folder.ChangeSortOrder(folder.SortOrder / 2);
