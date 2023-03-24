@@ -61,7 +61,15 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
                 return downgradingResult;
         }
 
-        await _unitOfWork.SaveChangesAsync(default);
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return Result<Item?>.Failure(DomainErrors.Exception
+                .WithParameters(ex.InnerException?.Message!));
+        }
 
         return reorderedItem;
     }
