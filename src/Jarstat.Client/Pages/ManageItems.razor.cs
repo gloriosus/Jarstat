@@ -12,6 +12,7 @@ using Jarstat.Client.Requests;
 using Microsoft.AspNetCore.Components.Web;
 using System.Reflection.Metadata;
 using Microsoft.AspNetCore.Components.Forms;
+using System.Security.Policy;
 
 namespace Jarstat.Client.Pages;
 
@@ -628,5 +629,11 @@ public partial class ManageItems
         }
 
         fileUploadState = FileUploadState.Success;
+    }
+
+    private async Task DownloadFileOnDblClick(TreeEventArgs<ItemResponse> e)
+    {
+        var item = e.Node.DataItem;
+        await js.InvokeVoidAsync(JSInteropConstants.TriggerFileDownload, null, $"api/documents/download/{item.ItemId}");
     }
 }
