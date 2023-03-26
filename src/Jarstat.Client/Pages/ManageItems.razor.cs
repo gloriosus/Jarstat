@@ -93,13 +93,13 @@ public partial class ManageItems
 
     private async Task MoveItemOnDrop(TreeEventArgs<ItemResponse> e)
     {
-        var selectedItem = e.Node.DataItem;
+        var moveableItem = e.Node.DataItem;
         var targetItem = e.TargetNode.DataItem;
         var dropPosition = e.TargetNode.Expanded ? DropPosition.Inside : DropPosition.Below;
 
         var reorderItemRequest = new ReorderItemRequest
         {
-            ItemId = selectedItem.ItemId,
+            ItemId = moveableItem.ItemId,
             TargetItemId = targetItem.ItemId,
             DropPosition = dropPosition
         };
