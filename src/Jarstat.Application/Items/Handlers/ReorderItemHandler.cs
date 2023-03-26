@@ -9,14 +9,14 @@ using Microsoft.EntityFrameworkCore.Update;
 
 namespace Jarstat.Application.Handlers;
 
-public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionCommand, Result<Item?>>
+public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Item?>>
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IFolderRepository _folderRepository;
     private readonly IItemRepository _itemRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public ChangeItemPositionHandler(
+    public ReorderItemHandler(
         IDocumentRepository documentRepository, 
         IFolderRepository folderRepository,
         IItemRepository itemRepository,
@@ -28,7 +28,7 @@ public class ChangeItemPositionHandler : IRequestHandler<ChangeItemPositionComma
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Item?>> Handle(ChangeItemPositionCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Item?>> Handle(ReorderItemCommand request, CancellationToken cancellationToken)
     {
         var items = await _itemRepository.GetAllAsync();
         var moveableItem = items.FirstOrDefault(i => i.Id == request.ItemId);

@@ -23,10 +23,10 @@ public class ItemController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("move")]
-    public async Task<IActionResult> ChangeItemPosition([FromBody] ChangeItemPositionCommand changeItemPositionCommand)
+    [HttpPost("reorder")]
+    public async Task<IActionResult> ReorderItem([FromBody] ReorderItemCommand reorderItemCommand)
     {
-        var result = await _mediator.Send(changeItemPositionCommand);
+        var result = await _mediator.Send(reorderItemCommand);
 
         if (result.IsFailure)
             switch (result.Error.Code)
