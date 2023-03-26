@@ -118,23 +118,12 @@ public partial class ManageItems
             return;
         }
 
-        Guid reloadItemId = default;
-
-        switch (targetItem.Type)
+        foreach (var key in expandedKeys)
         {
-            case "Document":
-                reloadItemId = (Guid)targetItem.ParentId!;
-                break;
-            case "Folder":
-                reloadItemId = (Guid)targetItem.ParentId!;
-                break;
+            var item = await items.FindItemResponseOrDefaultAsync(Guid.Parse(key));
+            if (item is not null)
+                await ReloadChildren(item);
         }
-
-        var itemToReload = await items.FindItemResponseOrDefaultAsync(reloadItemId);
-        if (itemToReload is null) 
-            return;
-
-        await ReloadChildren(itemToReload);
     }
 
     private async Task UpdateStateOnExpandChanged(TreeEventArgs<ItemResponse> e)
