@@ -10,4 +10,5 @@ public interface IFolderRepository
     Task<Folder?> CreateAsync(Folder folder);
     Folder? Update(Folder folder);
     Folder? Delete(Folder folder);
+    Task<List<Folder>> GetByParentId(Guid? parentId);
 }

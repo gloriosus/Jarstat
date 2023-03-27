@@ -1,5 +1,6 @@
 ﻿using Jarstat.Domain.Errors;
 using Jarstat.Domain.Primitives;
+using Jarstat.Domain.Records;
 using Jarstat.Domain.Shared;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
@@ -41,6 +42,15 @@ public sealed class Folder : Entity
 
     [NotMapped]
     public List<Folder> Children { get; set; } = new();
+
+    public static explicit operator Item?(Folder? folder) =>
+        folder is null ? null : new Item(folder.Id,
+                                           folder.DisplayName,
+                                           folder.ParentId,
+                                           "Folder",
+                                           folder.DateTimeCreated,
+                                           folder.DateTimeUpdated,
+                                           folder.SortOrder);
 
     public static Result<Folder?> Create(string displayName, string virtualPath, Folder? parent, User creator)
     {
