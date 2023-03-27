@@ -1,5 +1,6 @@
 ﻿using Jarstat.Domain.Errors;
 using Jarstat.Domain.Primitives;
+using Jarstat.Domain.Records;
 using Jarstat.Domain.Shared;
 using System.Text.Json.Serialization;
 
@@ -70,6 +71,15 @@ public class Document : Entity
     public Guid? FileId { get; private set; }
     public File? File { get; private set; }
     public double SortOrder { get; private set; }
+
+    public static explicit operator Item?(Document? document) => 
+        document is null ? null : new Item(document.Id, 
+                                           document.DisplayName, 
+                                           document.FolderId, 
+                                           "Document", 
+                                           document.DateTimeCreated, 
+                                           document.DateTimeUpdated, 
+                                           document.SortOrder);
 
     //public static Result<Document> Create(
     //    string displayName, 

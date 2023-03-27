@@ -3,6 +3,7 @@ using Jarstat.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Jarstat.Presentation.Controllers;
 
@@ -22,10 +23,25 @@ public class ItemController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("move")]
-    public async Task<IActionResult> ChangeItemPosition([FromBody] ChangeItemPositionCommand changeItemPositionCommand)
+    [HttpPost("reorder")]
+    public async Task<IActionResult> ReorderItem([FromBody] ReorderItemCommand reorderItemCommand)
     {
-        var result = await _mediator.Send(changeItemPositionCommand);
+        var result = await _mediator.Send(reorderItemCommand);
+
+        if (result.IsFailure)
+            switch (result.Error.Code)
+            {
+                case "Error.EntryNotFound":
+                    return BadRequest(result);
+                case "Error.ArgumentLessThanZeroValue":
+                    return BadRequest(result);
+                case "Error.ArgumentNullOrWhiteSpaceValue":
+                    return BadRequest(result);
+                case "Error.ArgumentNullValue":
+                    return BadRequest(result);
+                case "Error.Exception":
+                    return StatusCode(StatusCodes.Status500InternalServerError, result);
+            }
 
         return Ok(result);
     }

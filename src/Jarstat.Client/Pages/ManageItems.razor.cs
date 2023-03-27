@@ -12,7 +12,7 @@ using Jarstat.Client.Requests;
 using Microsoft.AspNetCore.Components.Web;
 using System.Reflection.Metadata;
 using Microsoft.AspNetCore.Components.Forms;
-using System.Security.Policy;
+using Jarstat.Client.Extensions;
 
 namespace Jarstat.Client.Pages;
 
@@ -75,36 +75,36 @@ public partial class ManageItems
     }
 
     #region LoadTreeData
-    private async Task ReloadChildren(TreeNode<ItemResponse> node)
+    private async Task ReloadChildren(ItemResponse itemResponse)
     {
-        var dataItem = node.DataItem;
-        dataItem.Children.Clear();
-
-        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{dataItem.ItemId}");
+        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{itemResponse.ItemId}");
         var children = result?.Value!;
 
+        itemResponse.Children.Clear();
         foreach (var child in children)
-            dataItem.Children.Add(child);
+            itemResponse.Children.Add(child);
     }
 
     private async Task OnNodeLoadDelayAsync(TreeEventArgs<ItemResponse> args)
     {
-        await ReloadChildren(args.Node);
+        await ReloadChildren(args.Node.DataItem);
     }
     #endregion
 
     private async Task MoveItemOnDrop(TreeEventArgs<ItemResponse> e)
     {
-        var selectedItem = e.Node.DataItem;
+        var moveableItem = e.Node.DataItem;
         var targetItem = e.TargetNode.DataItem;
+        var dropPosition = e.TargetNode.Expanded ? DropPosition.Inside : DropPosition.Below;
 
-        var changeItemPositionRequest = new ChangeItemPositionRequest
+        var reorderItemRequest = new ReorderItemRequest
         {
-            ItemId = selectedItem.ItemId,
+            ItemId = moveableItem.ItemId,
             TargetItemId = targetItem.ItemId,
+            DropPosition = dropPosition
         };
 
-        var response = await Http.PostAsJsonAsync("api/items/move", changeItemPositionRequest);
+        var response = await Http.PostAsJsonAsync("api/items/reorder", reorderItemRequest);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -118,20 +118,12 @@ public partial class ManageItems
             return;
         }
 
-        Guid reloadItemId = default;
-
-        switch (targetItem.Type)
+        foreach (var key in expandedKeys)
         {
-            case "Document":
-                reloadItemId = (Guid)targetItem.ParentId!;
-                break;
-            case "Folder":
-                reloadItemId = targetItem.ItemId;
-                break;
+            var item = await items.FindItemResponseOrDefaultAsync(Guid.Parse(key));
+            if (item is not null)
+                await ReloadChildren(item);
         }
-
-        var targetNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == reloadItemId);
-        await ReloadChildren(targetNode);
     }
 
     private async Task UpdateStateOnExpandChanged(TreeEventArgs<ItemResponse> e)
@@ -208,8 +200,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parentNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ParentId);
-            await ReloadChildren(parentNode);
+            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
 
@@ -317,8 +312,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parentNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ParentId);
-            await ReloadChildren(parentNode);
+            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
 
@@ -406,8 +404,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parentNode = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ParentId);
-            await ReloadChildren(parentNode);
+            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
 
@@ -500,8 +501,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var node = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ItemId);
-            await ReloadChildren(node);
+            var parent = await items.FindItemResponseOrDefaultAsync(selectedItem.ItemId);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
     #endregion
@@ -594,8 +598,11 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var node = _tree.FindFirstOrDefaultNode(i => i.DataItem.ItemId == selectedItem.ItemId);
-            await ReloadChildren(node);
+            var parent = await items.FindItemResponseOrDefaultAsync(selectedItem.ItemId);
+            if (parent is null)
+                return;
+
+            await ReloadChildren(parent);
         }
     }
     #endregion
