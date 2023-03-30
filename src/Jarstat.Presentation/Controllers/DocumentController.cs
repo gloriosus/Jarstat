@@ -1,11 +1,8 @@
-﻿using Jarstat.Application.Commands;
-using Jarstat.Application.Queries;
-using Jarstat.Domain.Entities;
-using Jarstat.Domain.Errors;
-using Jarstat.Domain.Shared;
-using MediatR;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using Jarstat.Application.Commands;
+using Jarstat.Application.Queries;
 
 namespace Jarstat.Presentation.Controllers;
 
@@ -129,6 +126,21 @@ public class DocumentController : ControllerBase
 
         if (result is null)
             return NotFound(result);
+
+        return Ok(result);
+    }
+
+    [HttpPost("search")]
+    public async Task<IActionResult> SearchDocuments([FromBody] SearchDocumentsCommand searchDocumentsCommand)
+    {
+        var result = await _mediator.Send(searchDocumentsCommand);
+
+        if (result.IsFailure)
+            switch (result.Error.Code)
+            {
+                case "Error.ArgumentNotAcceptableValue":
+                    return BadRequest(result);
+            }
 
         return Ok(result);
     }
