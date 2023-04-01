@@ -46,7 +46,7 @@
                     @context.DisplayName
                 </SpaceItem>
                 <SpaceItem>
-                    <Tag style="max-width: 600px; overflow: clip;"><small title="@context.Folder.DisplayName">Тема: @context.Folder.DisplayName</small></Tag>
+                    <Tag style="max-width: 600px; overflow: clip;"><small title="@context.Folder.DisplayName">Тема: @(string.Join(' ', context.Folder.DisplayName.Split(' ').Skip(1)))</small></Tag>
                 </SpaceItem>
             </Space>
         </PropertyColumn>
