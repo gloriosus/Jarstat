@@ -384,6 +384,7 @@ public partial class ManageItems
 
             copyFileRequest.EnsureSuccessStatusCode();
             updateDocumentRequest.FileId = await copyFileRequest.Content.ReadFromJsonAsync<Guid?>();
+            updateDocumentRequest.FileName = uploadResult?.FileName!;
         }
 
         var isSuccess = await UpdateDocument(updateDocumentRequest);
