@@ -61,19 +61,4 @@ public class ItemController : ControllerBase
         var result = await _mediator.Send(query);
         return Ok(result);
     }
-
-    [HttpPost("search")]
-    public async Task<IActionResult> SearchDocuments([FromBody] SearchDocumentsCommand searchDocumentsCommand)
-    {
-        var result = await _mediator.Send(searchDocumentsCommand);
-
-        if (result.IsFailure)
-            switch (result.Error.Code)
-            {
-                case "Error.ArgumentNotAcceptableValue":
-                    return BadRequest(result);
-            }
-
-        return Ok(result);
-    }
 }

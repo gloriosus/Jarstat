@@ -23,7 +23,7 @@ public partial class Search
 
     private SearchDocumentsRequest searchDocumentRequest = new();
 
-    private List<ItemResponse> documents = new();
+    private List<DocumentResponse> documents = new();
     private List<ItemResponse> folders = new();
 
     private string[] checkedKeys;
@@ -33,8 +33,8 @@ public partial class Search
         searchDocumentRequest.Skip = (_currentPage - 1) * _size;
         searchDocumentRequest.Take = _size;
 
-        var response = await Http.PostAsJsonAsync("api/items/search", searchDocumentRequest);
-        var result = await response.Content.ReadFromJsonAsync<Result<SearchResultResponse<ItemResponse>>>();
+        var response = await Http.PostAsJsonAsync("api/documents/search", searchDocumentRequest);
+        var result = await response.Content.ReadFromJsonAsync<Result<SearchResultResponse<DocumentResponse>>>();
         if (!response.IsSuccessStatusCode)
         {
             Layout.ErrorType = AlertType.Error;
