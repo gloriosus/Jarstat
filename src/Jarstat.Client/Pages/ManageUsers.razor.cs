@@ -31,6 +31,9 @@ public partial class ManageUsers
     private bool _updateUserVisible = false;
     private UpdateUserRequest updateUserRequest = new();
 
+    private bool _deleteUserVisible = false;
+    private Guid selectedUserId = Guid.Empty;
+
     private string searchKey = string.Empty;
     private SearchUsersRequest searchUsersRequest = new();
 
@@ -175,9 +178,11 @@ public partial class ManageUsers
             await LoadUsers();
     }
 
-    private async Task DeleteUser(Guid userId)
+    private async Task DeleteUser()
     {
-        var response = await Http.DeleteAsync($"api/users/delete/{userId}");
+        var response = await Http.DeleteAsync($"api/users/delete/{selectedUserId}");
+
+        _deleteUserVisible = false;
 
         if (!response.IsSuccessStatusCode)
         {
