@@ -8,4 +8,14 @@ public class CreateDocumentRequest
     public string? Description { get; set; }
     public Guid CreatorId { get; set; }
     public Guid? FileId { get; set; }
+
+    public void Clear()
+    {
+        DisplayName = string.Empty;
+        FileName = string.Empty;
+        FolderId = Guid.Empty;
+        Description = null;
+        CreatorId = Guid.Empty;
+        FileId = null;
+    }
 }

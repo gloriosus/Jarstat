@@ -1,42 +1,57 @@
 ﻿using Jarstat.Application.Commands;
+using Jarstat.Domain.Abstractions;
+using Jarstat.Domain.Entities;
 using Jarstat.Domain.Shared;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 
 namespace Jarstat.Application.Handlers;
 
 public class UploadFileHandler : IRequestHandler<UploadFileCommand, UploadResult>
 {
-    private readonly IConfiguration _configuration;
+    private readonly IFileRepository _fileRepository;
+    private readonly UserManager<User> _userManager;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UploadFileHandler(IConfiguration configuration) => _configuration = configuration;
+    public UploadFileHandler(
+        IFileRepository fileRepository,
+        UserManager<User> userManager,
+        IUnitOfWork unitOfWork)
+    {
+        _fileRepository = fileRepository;
+        _userManager = userManager;
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task<UploadResult> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
-        var id = Guid.NewGuid();
+        var creator = await _userManager.FindByIdAsync(request.CreatorId.ToString());
+        if (creator is null)
+            return UploadResult.Empty;
 
-        string storagePath = _configuration["TempStoragePath"] ?? "C:\\temp_storage";
-        string fileExtension = Path.GetExtension(request.File.FileName);
-        string fileName = $"{id}{fileExtension}";
-        string filePath = Path.Combine(storagePath, fileName);
+        await using Stream stream = request.File.OpenReadStream();
+        if (stream.Length == 0)
+            return UploadResult.Empty;
 
-        if (!Directory.Exists(storagePath))
-            Directory.CreateDirectory(storagePath);
+        var buffer = new byte[stream.Length];
+        await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
 
-        await using FileStream fs = new FileStream(filePath, FileMode.Create);
-        await request.File.CopyToAsync(fs);
+        var fileCreationResult = Domain.Entities.File.Create(buffer, creator);
+        if (fileCreationResult.IsFailure)
+            return UploadResult.Empty;
 
-        if (fs.Length == 0)
-            return new UploadResult
-            {
-                FileName = null,
-                StoredFileName = null
-            };
+        var result = await _fileRepository.CreateAsync(fileCreationResult.Value!);
 
-        return new UploadResult
+        try
         {
-            FileName = request.File.FileName,
-            StoredFileName = id.ToString()
-        };
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            return UploadResult.Empty;
+        }
+
+        return new UploadResult(request.File.FileName, result?.Id);
     }
 }

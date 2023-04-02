@@ -94,7 +94,7 @@
                 <Input @bind-Value="createDocumentRequest.DisplayName" />
             </FormItem>
             <FormItem>
-                <InputFile id="file-input" class="form-control" OnChange="@UploadFile" />
+                <InputFile id="file-input" class="form-control" OnChange="@AssignFile" />
                 @switch (fileUploadState)
                 {
                     case FileUploadState.Failure:

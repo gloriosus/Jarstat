@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Components.Web;
 using System.Reflection.Metadata;
 using Microsoft.AspNetCore.Components.Forms;
 using Jarstat.Client.Extensions;
+using Microsoft.Net.Http.Headers;
 
 namespace Jarstat.Client.Pages;
 
@@ -48,10 +49,10 @@ public partial class ManageItems
 
     private bool _createDocumentVisible = false;
     private CreateDocumentRequest createDocumentRequest = new();
-
+    
     private bool _deleteItemVisible = false;
 
-    private UploadResult? uploadResult = new();
+    private IBrowserFile uploadedFile;
     private FileUploadState fileUploadState = FileUploadState.None;
     private long MAX_FILE_SIZE = default;
 
@@ -379,16 +380,7 @@ public partial class ManageItems
 
         if (fileUploadState == FileUploadState.Success)
         {
-            var copyFileRequest = await Http.PostAsJsonAsync<CopyFileRequest>("api/documents/copy", new()
-            {
-                FileName = uploadResult?.FileName!,
-                StoredFileName = uploadResult?.StoredFileName!,
-                CreatorId = (Guid)await GetLoggedUserId()
-            });
-
-            copyFileRequest.EnsureSuccessStatusCode();
-            updateDocumentRequest.FileId = await copyFileRequest.Content.ReadFromJsonAsync<Guid?>();
-            updateDocumentRequest.FileName = uploadResult?.FileName!;
+            //updateDocumentRequest.FileId = uploadResult?.FileId;
         }
 
         var isSuccess = await UpdateDocument(updateDocumentRequest);
@@ -402,8 +394,7 @@ public partial class ManageItems
         updateDocumentRequest.FileId = null;
 
         fileUploadState = FileUploadState.None;
-        uploadResult.FileName = null;
-        uploadResult.StoredFileName = null;
+        //uploadResult = UploadResult.Empty;
 
         _updateDocumentVisible = false;
 
@@ -558,47 +549,22 @@ public partial class ManageItems
 
         if (string.IsNullOrWhiteSpace(createDocumentRequest.DisplayName))
         {
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = "Error.ArgumentNullOrWhiteSpaceValue";
-            Layout.ErrorMessage = "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов";
-            Layout.ShowError = true;
-
+            ShowError(
+                "Error.ArgumentNullOrWhiteSpaceValue", 
+                "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов");
             _createDocumentVisible = false;
-
             return;
         }
 
-        if (fileUploadState == FileUploadState.Success)
-        {
-            var copyFileRequest = await Http.PostAsJsonAsync<CopyFileRequest>("api/documents/copy", new()
-            {
-                FileName = uploadResult?.FileName!,
-                StoredFileName = uploadResult?.StoredFileName!,
-                CreatorId = (Guid)await GetLoggedUserId()
-            });
-
-            copyFileRequest.EnsureSuccessStatusCode();
-            createDocumentRequest.FileId = await copyFileRequest.Content.ReadFromJsonAsync<Guid?>();
-        }
-
-        createDocumentRequest.FileName = uploadResult?.FileName!;
-        createDocumentRequest.FolderId = (Guid)selectedItem.ItemId!;
-        //createDocumentRequest.Description = documentResponse.Value!.Description;
+        createDocumentRequest.FileId = await UploadFile();
+        createDocumentRequest.FileName = uploadedFile.Name;
+        createDocumentRequest.FolderId = selectedItem.ItemId;
         createDocumentRequest.CreatorId = (Guid)await GetLoggedUserId();
 
         bool isSuccess = await CreateDocument(createDocumentRequest);
 
-        createDocumentRequest.DisplayName = string.Empty;
-        createDocumentRequest.FileName = string.Empty;
-        createDocumentRequest.FolderId = default;
-        createDocumentRequest.Description = null;
-        createDocumentRequest.CreatorId = default;
-        createDocumentRequest.FileId = null;
-
+        createDocumentRequest.Clear();
         fileUploadState = FileUploadState.None;
-        uploadResult.FileName = null;
-        uploadResult.StoredFileName = null;
-
         _createDocumentVisible = false;
 
         if (isSuccess)
@@ -612,34 +578,15 @@ public partial class ManageItems
     }
     #endregion
 
-    private async Task UploadFile(InputFileChangeEventArgs e)
+    private void AssignFile(InputFileChangeEventArgs e)
     {
-        var file = e.File;
-
-        if (file.Size > MAX_FILE_SIZE)
+        if (e.File.Size == 0 || e.File.Size > MAX_FILE_SIZE)
         {
             fileUploadState = FileUploadState.Failure;
             return;
         }
 
-        var uploadRequest = new HttpRequestMessage(HttpMethod.Post, "api/documents/upload");
-        var content = new MultipartFormDataContent
-        {
-            { new StreamContent(file.OpenReadStream(MAX_FILE_SIZE)), "File", file.Name }
-        };
-
-        uploadRequest.Content = content;
-        var response = await Http.SendAsync(uploadRequest);
-        response.EnsureSuccessStatusCode();
-
-        uploadResult = await response.Content.ReadFromJsonAsync<UploadResult>();
-
-        if (uploadResult is null || string.IsNullOrWhiteSpace(uploadResult.FileName))
-        {
-            fileUploadState = FileUploadState.Failure;
-            return;
-        }
-
+        uploadedFile = e.File;
         fileUploadState = FileUploadState.Success;
     }
 
@@ -647,5 +594,46 @@ public partial class ManageItems
     {
         var item = e.Node.DataItem;
         await js.InvokeVoidAsync(JSInteropConstants.TriggerFileDownload, null, $"api/documents/download/{item.ItemId}");
+    }
+
+    private void ShowError(string errorCode, string errorMessage)
+    {
+        Layout.ErrorType = AlertType.Error;
+        Layout.ErrorCode = errorCode;
+        Layout.ErrorMessage = errorMessage;
+        Layout.ShowError = true;
+    }
+
+    private async Task<Guid?> UploadFile()
+    {
+        if (fileUploadState == FileUploadState.Success)
+        {
+            var uploadRequest = new HttpRequestMessage(HttpMethod.Post, "api/documents/upload");
+            var content = new MultipartFormDataContent
+            {
+                { new StreamContent(uploadedFile.OpenReadStream(MAX_FILE_SIZE)), "File", uploadedFile.Name },
+                { new StringContent(((Guid)await GetLoggedUserId()).ToString()), "CreatorId" }
+            };
+
+            uploadRequest.Content = content;
+
+            var response = await Http.SendAsync(uploadRequest);
+            response.EnsureSuccessStatusCode();
+
+            var uploadResult = await response.Content.ReadFromJsonAsync<UploadResult>();
+            if (uploadResult is null || uploadResult == UploadResult.Empty)
+            {
+                ShowError(
+                    "Error.ObjectNullValue",
+                    "Значение объекта UploadResult оказалось равным null, либо UploadResult.Empty");
+                _createDocumentVisible = false;
+
+                return null;
+            }
+
+            return uploadResult.FileId;
+        }
+
+        return null;
     }
 }

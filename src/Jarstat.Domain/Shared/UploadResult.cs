@@ -1,9 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿namespace Jarstat.Domain.Shared;
 
-namespace Jarstat.Domain.Shared;
-
-public class UploadResult
+public sealed record UploadResult(string? FileName, Guid? FileId)
 {
-    public string? FileName { get; set; }
-    public string? StoredFileName { get; set; }
+    public static UploadResult Empty = new UploadResult(null, null);
 }
