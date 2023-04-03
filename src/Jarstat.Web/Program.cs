@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -11,7 +12,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
-var builder = WebApplication.CreateBuilder(args);
+var webApplicationOptions = new WebApplicationOptions
+{ 
+    ContentRootPath = AppContext.BaseDirectory, 
+    Args = args, 
+    ApplicationName = Process.GetCurrentProcess().ProcessName 
+};
+
+var builder = WebApplication.CreateBuilder(webApplicationOptions);
+
+builder.Host.UseWindowsService();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>();

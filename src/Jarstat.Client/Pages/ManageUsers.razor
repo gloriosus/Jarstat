@@ -39,7 +39,7 @@
                     <Button OnClick="() => { updateUserRequest.UserId = context.UserId; _updateUserVisible = true; }">Сменить пароль</Button>
                 </SpaceItem>
                 <SpaceItem>
-                    <Button Danger OnClick="() => DeleteUser(context.UserId)">Удалить</Button>
+                    <Button Danger OnClick="() => { selectedUserId = context.UserId; _deleteUserVisible = true; }">Удалить</Button>
                 </SpaceItem>
             </Space>
         </ActionColumn>
@@ -69,5 +69,13 @@
                 <InputPassword @bind-Value="updateUserRequest.Password" />
             </FormItem>
         </Form>
+    </Modal>
+    <Modal Title="Подтверждение удаления"
+           Visible="@_deleteUserVisible"
+           OnOk="DeleteUser"
+           OnCancel="() => _deleteUserVisible = false"
+           Draggable>
+        <Icon Type="warning" Theme="twotone" TwotoneColor="#faad14" Width="2em" Height="2em" style="float: left; margin-right: 10px;" />
+        <div>Вы действительно хотите удалить выбранного пользователя? Данное действие нельзя будет отменить.</div>
     </Modal>
 </div>

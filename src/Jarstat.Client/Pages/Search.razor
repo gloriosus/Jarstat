@@ -13,6 +13,7 @@
 
 @inject HttpClient Http
 @inject IJSRuntime js
+@inject ClientSettings clientSettings
 
 <div class="col-3">
     <Affix OffsetTop="10">
@@ -35,26 +36,26 @@
 <div class="col-9">
     <h6>Документы</h6>
     <Table DataSource="documents"
-           TItem="ItemResponse"
+           TItem="DocumentResponse"
            Total="_total"
            @bind-PageIndex="_currentPage"
            @bind-PageSize="_size"
            OnChange="OnCurrentPageChange">
-        <PropertyColumn Title="Название документа" Property="i => i.DisplayName">
-            <Space Direction="DirectionVHType.Vertical">
+        <PropertyColumn Title="Название документа" Property="x => x.DisplayName">
+            <Space Direction="DirectionVHType.Vertical" Wrap="true">
                 <SpaceItem>
                     @context.DisplayName
                 </SpaceItem>
-                @*<SpaceItem>
-                    <Tag>Тема: социально-экономическое положение Еврейской автономной области</Tag>
-                </SpaceItem>*@
+                <SpaceItem>
+                    <Tag Color="@clientSettings.TagColor" style="max-width: 600px; overflow: clip;"><small title="@context.Folder.DisplayName">Тема: @(string.Join(' ', context.Folder.DisplayName.Split(' ').Skip(1)))</small></Tag>
+                </SpaceItem>
             </Space>
         </PropertyColumn>
-        <PropertyColumn Title="Дата создания" Property="i => i.DateTimeCreated" Format="dd.MM.yyyy" />
+        <PropertyColumn Title="Дата создания" Property="x => x.DateTimeCreated" Format="dd.MM.yyyy" />
         <ActionColumn Title="Действие">
             <Space>
                 <SpaceItem>
-                    <DownloadButton Icon="@IconType.Outline.Download" Url="@($"api/documents/download/{context.ItemId}")">Скачать</DownloadButton>
+                    <DownloadButton Icon="@IconType.Outline.Download" Url="@($"api/documents/download/{context.DocumentId}")">Скачать</DownloadButton>
                 </SpaceItem>
             </Space>
         </ActionColumn>

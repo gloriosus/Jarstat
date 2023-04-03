@@ -45,24 +45,4 @@ public class ItemRepository : IItemRepository
 
         return result;
     }
-
-    public async Task<SearchResult<Item>> SearchDocuments(string? displayName, Guid[] parentIds, int skip = 0, int take = 10)
-    {
-        var result = _dbContext.Set<Item>()
-            .FromSqlRaw($"SELECT \"Id\", \"DisplayName\", \"ParentId\", \"Type\", \"DateTimeCreated\", \"DateTimeUpdated\", \"SortOrder\" FROM \"ItemsView\" WHERE \"Type\" = 'Document'");
-
-        if (!string.IsNullOrWhiteSpace(displayName))
-            result = result.Where(i => i.DisplayName.ToLower().Contains(displayName.ToLower()));
-
-        if (parentIds.Any())
-            result = result.Where(i => parentIds.Contains((Guid)i.ParentId!));
-
-        int count = await result.CountAsync();
-
-        result = result.OrderByDescending(i => i.DateTimeCreated).Skip(skip).Take(take);
-
-        List<Item> items = await result.ToListAsync();
-
-        return new SearchResult<Item>(items, count);
-    }
 }

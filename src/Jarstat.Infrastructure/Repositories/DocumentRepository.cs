@@ -66,4 +66,27 @@ public class DocumentRepository : IDocumentRepository
 
         return result;
     }
+
+    public async Task<SearchResult<Document>> SearchDocuments(string? displayName, Guid[] parentIds, int skip = 0, int take = 10)
+    {
+        var result = _dbContext.Set<Document>()
+                               .Include(d => d.Folder)
+                               .Include(d => d.Creator)
+                               .Include(d => d.LastUpdater)
+                               .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(displayName))
+            result = result.Where(d => d.DisplayName.ToLower().Contains(displayName.ToLower()));
+
+        if (parentIds.Any())
+            result = result.Where(d => parentIds.Contains(d.FolderId));
+
+        int count = await result.CountAsync();
+
+        result = result.OrderByDescending(d => d.DateTimeCreated).Skip(skip).Take(take);
+
+        List<Document> documents = await result.ToListAsync();
+
+        return new SearchResult<Document>(documents, count);
+    }
 }

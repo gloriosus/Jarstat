@@ -49,6 +49,8 @@ public partial class ManageItems
     private bool _createDocumentVisible = false;
     private CreateDocumentRequest createDocumentRequest = new();
 
+    private bool _deleteItemVisible = false;
+
     private UploadResult? uploadResult = new();
     private FileUploadState fileUploadState = FileUploadState.None;
     private long MAX_FILE_SIZE = default;
@@ -181,7 +183,7 @@ public partial class ManageItems
     }
 
     #region DeleteItem
-    private async Task DeleteOnButtonClick(MouseEventArgs e)
+    private async Task DeleteItemOnFinish()
     {
         if (selectedItem is null)
             return;
@@ -197,6 +199,8 @@ public partial class ManageItems
                 isSuccess = await DeleteFolder(selectedItem.ItemId);
                 break;
         }
+
+        _deleteItemVisible = false;
 
         if (isSuccess)
         {
@@ -384,6 +388,7 @@ public partial class ManageItems
 
             copyFileRequest.EnsureSuccessStatusCode();
             updateDocumentRequest.FileId = await copyFileRequest.Content.ReadFromJsonAsync<Guid?>();
+            updateDocumentRequest.FileName = uploadResult?.FileName!;
         }
 
         var isSuccess = await UpdateDocument(updateDocumentRequest);
