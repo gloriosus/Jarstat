@@ -1,9 +1,11 @@
-﻿using System.Text.Json.Serialization;
+﻿using Jarstat.Domain.Abstractions;
+using System.Text.Json.Serialization;
 
 namespace Jarstat.Domain.Shared;
 
-public class Result<T>
+public class Result<T> where T : IDefault<T>
 {
+    // TODO: make the constructor protected
     [JsonConstructor]
     public Result(T? value, bool isSuccess, Error error)
     {
@@ -24,7 +26,14 @@ public class Result<T>
     public Error Error { get; }
 
     public static implicit operator Result<T>(T value) => Success(value);
+    public static implicit operator Result<T>(Error error) => Failure(error);
 
     public static Result<T> Success(T value) => new Result<T>(value, true, Error.None);
-    public static Result<T> Failure(Error error) => new Result<T>(default(T), false, error);
+    public static Result<T> Failure(Error error) => new Result<T>(T.Default, false, error);
+
+    public Result<TDestination> AsResult<TDestination>()
+        where TDestination : IDefault<TDestination>
+    {
+        return new Result<TDestination>(TDestination.Default, IsSuccess, Error);
+    }
 }
