@@ -1,8 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿using Jarstat.Domain.Abstractions;
+using System.Text.Json.Serialization;
 
 namespace Jarstat.Client.Responses;
 
-public record ItemResponse
+public record ItemResponse : IDefault<ItemResponse>
 {
     [JsonConstructor]
     public ItemResponse(
@@ -19,6 +20,8 @@ public record ItemResponse
         SortOrder = sortOrder;
     }
 
+    public static ItemResponse? Default => null;
+
     [JsonPropertyName("id")]
     public Guid ItemId { get; init; }
     public string DisplayName { get; init; } = null!;
@@ -29,5 +32,5 @@ public record ItemResponse
     public double SortOrder { get; init; }
 
     [JsonIgnore]
-    public List<ItemResponse> Children { get; set; } = new();
+    public Collection<ItemResponse> Children { get; set; } = new();
 }

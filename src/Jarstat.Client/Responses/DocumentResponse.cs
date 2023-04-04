@@ -1,8 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿using Jarstat.Domain.Abstractions;
+using System.Text.Json.Serialization;
 
 namespace Jarstat.Client.Responses;
 
-public record DocumentResponse
+public record DocumentResponse : IDefault<DocumentResponse>
 {
     [JsonConstructor]
     public DocumentResponse(
@@ -32,6 +33,8 @@ public record DocumentResponse
         LastUpdater = lastUpdater;
         SortOrder = sortOrder;
     }
+
+    public static DocumentResponse? Default => null;
 
     [JsonPropertyName("id")]
     public Guid DocumentId { get; init; }

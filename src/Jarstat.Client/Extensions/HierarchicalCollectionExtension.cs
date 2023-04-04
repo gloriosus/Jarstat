@@ -2,13 +2,13 @@
 
 namespace Jarstat.Client.Extensions;
 
-public static class HierarchicalListExtension
+public static class HierarchicalCollectionExtension
 {
-    public static async Task<ItemResponse?> FindItemResponseOrDefaultAsync(this List<ItemResponse> list, Guid itemId)
+    public static async Task<ItemResponse?> FindItemResponseOrDefaultAsync(this Collection<ItemResponse> collection, Guid itemId)
     {
-        ItemResponse? result = default;
+        ItemResponse? result = null;
 
-        foreach (var item in list)
+        foreach (var item in collection)
         {
             if (item.ItemId == itemId) 
                 return item;

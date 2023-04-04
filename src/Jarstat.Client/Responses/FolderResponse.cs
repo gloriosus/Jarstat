@@ -1,8 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿using Jarstat.Domain.Abstractions;
+using System.Text.Json.Serialization;
 
 namespace Jarstat.Client.Responses;
 
-public record FolderResponse
+public record FolderResponse : IDefault<FolderResponse>
 {
     [JsonConstructor]
     public FolderResponse(
@@ -28,6 +29,8 @@ public record FolderResponse
         LastUpdater = lastUpdater;
         SortOrder = sortOrder;
     }
+
+    public static FolderResponse? Default => null;
 
     [JsonPropertyName("id")]
     public Guid FolderId { get; init; }

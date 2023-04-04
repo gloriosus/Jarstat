@@ -25,7 +25,7 @@ public partial class ManageItems
     [CascadingParameter]
     public ManageLayout Layout { get; set; }
 
-    private List<ItemResponse> items { get; set; } = new();
+    private Collection<ItemResponse> items { get; set; } = new();
     private Tree<ItemResponse> _tree = new();
 
     private string searchKey = string.Empty;
@@ -60,7 +60,7 @@ public partial class ManageItems
     {
         Layout.ActiveTab = Tab.Items;
 
-        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>("api/items/roots");
+        var result = await Http.GetFromJsonAsync<Result<Collection<ItemResponse>>>("api/items/roots");
         items = result?.Value!;
 
         MAX_FILE_SIZE = clientSettings.MaxFileUploadSizeInBytes;
@@ -80,7 +80,7 @@ public partial class ManageItems
     #region LoadTreeData
     private async Task ReloadChildren(ItemResponse itemResponse)
     {
-        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{itemResponse.ItemId}");
+        var result = await Http.GetFromJsonAsync<Result<Collection<ItemResponse>>>($"api/items/children/{itemResponse.ItemId}");
         var children = result?.Value!;
 
         itemResponse.Children.Clear();
@@ -111,12 +111,8 @@ public partial class ManageItems
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse?>>();
-
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = result!.Error.Code;
-            Layout.ErrorMessage = result!.Error.Message;
-            Layout.ShowError = true;
+            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse>>();
+            ShowError(result!.Error);
 
             return;
         }
@@ -219,12 +215,8 @@ public partial class ManageItems
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<DocumentResponse?>>();
-
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = result!.Error.Code;
-            Layout.ErrorMessage = result!.Error.Message;
-            Layout.ShowError = true;
+            var result = await response.Content.ReadFromJsonAsync<Result<DocumentResponse>>();
+            ShowError(result!.Error);
 
             return false;
         }
@@ -238,12 +230,8 @@ public partial class ManageItems
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse?>>();
-
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = result!.Error.Code;
-            Layout.ErrorMessage = result!.Error.Message;
-            Layout.ShowError = true;
+            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse>>();
+            ShowError(result!.Error);
 
             return false;
         }
@@ -275,12 +263,8 @@ public partial class ManageItems
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse?>>();
-
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = result!.Error.Code;
-            Layout.ErrorMessage = result!.Error.Message;
-            Layout.ShowError = true;
+            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse>>();
+            ShowError(result!.Error);
 
             return false;
         }
@@ -295,10 +279,9 @@ public partial class ManageItems
 
         if (string.IsNullOrWhiteSpace(updateFolderRequest.DisplayName))
         {
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = "Error.ArgumentNullOrWhiteSpaceValue";
-            Layout.ErrorMessage = "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов";
-            Layout.ShowError = true;
+            ShowError(new Error(
+                "Error.ArgumentNullOrWhiteSpaceValue",
+                "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов"));
 
             _updateFolderVisible = false;
 
@@ -348,12 +331,8 @@ public partial class ManageItems
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<DocumentResponse?>>();
-
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = result!.Error.Code;
-            Layout.ErrorMessage = result!.Error.Message;
-            Layout.ShowError = true;
+            var result = await response.Content.ReadFromJsonAsync<Result<DocumentResponse>>();
+            ShowError(result!.Error);
 
             return false;
         }
@@ -368,11 +347,10 @@ public partial class ManageItems
 
         if (string.IsNullOrWhiteSpace(updateDocumentRequest.DisplayName))
         {
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = "Error.ArgumentNullOrWhiteSpaceValue";
-            Layout.ErrorMessage = "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов";
-            Layout.ShowError = true;
-
+            ShowError(new Error(
+                "Error.ArgumentNullOrWhiteSpaceValue",
+                "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов"));
+            
             _updateDocumentVisible = false;
 
             return;
@@ -414,7 +392,7 @@ public partial class ManageItems
         if (userId is null)
             return;
 
-        var documentResponse = await Http.GetFromJsonAsync<Result<DocumentResponse?>>($"api/documents/{selectedItem.ItemId}");
+        var documentResponse = await Http.GetFromJsonAsync<Result<DocumentResponse>>($"api/documents/{selectedItem.ItemId}");
         if (documentResponse is null || documentResponse.IsFailure)
             return;
 
@@ -452,12 +430,8 @@ public partial class ManageItems
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse?>>();
-
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = result!.Error.Code;
-            Layout.ErrorMessage = result!.Error.Message;
-            Layout.ShowError = true;
+            var result = await response.Content.ReadFromJsonAsync<Result<FolderResponse>>();
+            ShowError(result!.Error);
 
             return false;
         }
@@ -472,10 +446,9 @@ public partial class ManageItems
 
         if (string.IsNullOrWhiteSpace(createFolderRequest.DisplayName))
         {
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = "Error.ArgumentNullOrWhiteSpaceValue";
-            Layout.ErrorMessage = "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов";
-            Layout.ShowError = true;
+            ShowError(new Error(
+                "Error.ArgumentNullOrWhiteSpaceValue",
+                "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов"));
 
             _createFolderVisible = false;
 
@@ -529,12 +502,8 @@ public partial class ManageItems
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<DocumentResponse?>>();
-
-            Layout.ErrorType = AlertType.Error;
-            Layout.ErrorCode = result!.Error.Code;
-            Layout.ErrorMessage = result!.Error.Message;
-            Layout.ShowError = true;
+            var result = await response.Content.ReadFromJsonAsync<Result<DocumentResponse>>();
+            ShowError(result!.Error);
 
             return false;
         }
