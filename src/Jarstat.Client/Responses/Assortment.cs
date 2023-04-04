@@ -3,9 +3,9 @@ using System.Collections;
 
 namespace Jarstat.Client.Responses;
 
-public class Collection<T> : IList<T>, IDefault<Collection<T>>
+public class Assortment<T> : IList<T>, IDefault<Assortment<T>>
 {
-    private static readonly Collection<T> Empty = new Collection<T>() { _items = new List<T>().AsReadOnly() };
+    private static readonly Assortment<T> Empty = new Assortment<T>() { _items = new List<T>().AsReadOnly() };
 
     private IList<T> _items = new List<T>();
 
@@ -15,7 +15,7 @@ public class Collection<T> : IList<T>, IDefault<Collection<T>>
         set => _items[index] = value; 
     }
 
-    public static Collection<T>? Default => Empty;
+    public static Assortment<T>? Default => Empty;
 
     public int Count => _items.Count;
 

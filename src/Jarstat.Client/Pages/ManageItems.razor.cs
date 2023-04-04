@@ -25,7 +25,7 @@ public partial class ManageItems
     [CascadingParameter]
     public ManageLayout Layout { get; set; }
 
-    private Collection<ItemResponse> items { get; set; } = new();
+    private Assortment<ItemResponse> items { get; set; } = new();
     private Tree<ItemResponse> _tree = new();
 
     private string searchKey = string.Empty;
@@ -60,7 +60,7 @@ public partial class ManageItems
     {
         Layout.ActiveTab = Tab.Items;
 
-        var result = await Http.GetFromJsonAsync<Result<Collection<ItemResponse>>>("api/items/roots");
+        var result = await Http.GetFromJsonAsync<Result<Assortment<ItemResponse>>>("api/items/roots");
         items = result?.Value!;
 
         MAX_FILE_SIZE = clientSettings.MaxFileUploadSizeInBytes;
@@ -80,7 +80,7 @@ public partial class ManageItems
     #region LoadTreeData
     private async Task ReloadChildren(ItemResponse itemResponse)
     {
-        var result = await Http.GetFromJsonAsync<Result<Collection<ItemResponse>>>($"api/items/children/{itemResponse.ItemId}");
+        var result = await Http.GetFromJsonAsync<Result<Assortment<ItemResponse>>>($"api/items/children/{itemResponse.ItemId}");
         var children = result?.Value!;
 
         itemResponse.Children.Clear();

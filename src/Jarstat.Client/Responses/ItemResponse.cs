@@ -32,5 +32,5 @@ public record ItemResponse : IDefault<ItemResponse>
     public double SortOrder { get; init; }
 
     [JsonIgnore]
-    public Collection<ItemResponse> Children { get; set; } = new();
+    public Assortment<ItemResponse> Children { get; set; } = new();
 }
