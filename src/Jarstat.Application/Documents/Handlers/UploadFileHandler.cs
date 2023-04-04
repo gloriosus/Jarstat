@@ -1,6 +1,7 @@
 ﻿using Jarstat.Application.Commands;
 using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
+using Jarstat.Domain.Errors;
 using Jarstat.Domain.Shared;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Jarstat.Application.Handlers;
 
-public class UploadFileHandler : IRequestHandler<UploadFileCommand, UploadResult>
+public class UploadFileHandler : IRequestHandler<UploadFileCommand, Result<UploadValue>>
 {
     private readonly IFileRepository _fileRepository;
     private readonly UserManager<User> _userManager;
@@ -24,22 +25,24 @@ public class UploadFileHandler : IRequestHandler<UploadFileCommand, UploadResult
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<UploadResult> Handle(UploadFileCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UploadValue>> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
         var creator = await _userManager.FindByIdAsync(request.CreatorId.ToString());
         if (creator is null)
-            return UploadResult.Empty;
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.CreatorId), typeof(Guid).ToString(), request.CreatorId.ToString());
 
         await using Stream stream = request.File.OpenReadStream();
         if (stream.Length == 0)
-            return UploadResult.Empty;
+            return DomainErrors.StreamLengthEqualsZero
+                .WithParameters(nameof(stream), typeof(Stream).ToString());
 
         var buffer = new byte[stream.Length];
         await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
 
         var fileCreationResult = Domain.Entities.File.Create(buffer, creator);
         if (fileCreationResult.IsFailure)
-            return UploadResult.Empty;
+            return fileCreationResult.AsResult<UploadValue>();
 
         var result = await _fileRepository.CreateAsync(fileCreationResult.Value!);
 
@@ -49,9 +52,9 @@ public class UploadFileHandler : IRequestHandler<UploadFileCommand, UploadResult
         }
         catch
         {
-            return UploadResult.Empty;
+            return DomainErrors.Exception;
         }
 
-        return new UploadResult(request.File.FileName, result?.Id);
+        return new UploadValue(request.File.FileName, result?.Id);
     }
 }

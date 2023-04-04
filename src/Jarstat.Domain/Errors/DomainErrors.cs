@@ -17,4 +17,5 @@ public static class DomainErrors
     public static Error Identity = new Error("Error.Identity", "Возникла ошибка при взаимодействии с системой идентификации пользователей");
     public static Error LoginFailed = new Error("Error.LoginFailed", "Ошибка аутентификации. Проверьте правильность набора связки 'Имя пользователя':'Пароль'");
     public static Error ArgumentNotAcceptableValue = new Error("Error.ArgumentNotAcceptableValue", "Недопустимое значение запроса");
+    public static Error StreamLengthEqualsZero = new Error("Error.StreamLengthEqualsZero", "Длина потока оказалась равной нулю");
 }

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Jarstat.Application.Commands;
 
-public class UploadFileCommand : IRequest<UploadResult>
+public class UploadFileCommand : IRequest<Result<UploadValue>>
 {
     public IFormFile File { get; set; } = null!;
     public Guid CreatorId { get; set; }

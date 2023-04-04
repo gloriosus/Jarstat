@@ -549,9 +549,9 @@ public partial class ManageItems
 
         if (string.IsNullOrWhiteSpace(createDocumentRequest.DisplayName))
         {
-            ShowError(
+            ShowError(new Error(
                 "Error.ArgumentNullOrWhiteSpaceValue", 
-                "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов");
+                "Значение поля 'Отображаемое имя' оказалось равным null, пустой строке или строке, состоящей только из пробелов"));
             _createDocumentVisible = false;
             return;
         }
@@ -596,11 +596,11 @@ public partial class ManageItems
         await js.InvokeVoidAsync(JSInteropConstants.TriggerFileDownload, null, $"api/documents/download/{item.ItemId}");
     }
 
-    private void ShowError(string errorCode, string errorMessage)
+    private void ShowError(Error error)
     {
         Layout.ErrorType = AlertType.Error;
-        Layout.ErrorCode = errorCode;
-        Layout.ErrorMessage = errorMessage;
+        Layout.ErrorCode = error.Code;
+        Layout.ErrorMessage = error.Message;
         Layout.ShowError = true;
     }
 
@@ -620,18 +620,20 @@ public partial class ManageItems
             var response = await Http.SendAsync(uploadRequest);
             response.EnsureSuccessStatusCode();
 
-            var uploadResult = await response.Content.ReadFromJsonAsync<UploadResult>();
-            if (uploadResult is null || uploadResult == UploadResult.Empty)
+            var uploadResult = await response.Content.ReadFromJsonAsync<Result<UploadValue>>();
+
+            if (uploadResult is null)
+                return null;
+
+            if (uploadResult.IsFailure)
             {
-                ShowError(
-                    "Error.ObjectNullValue",
-                    "Значение объекта UploadResult оказалось равным null, либо UploadResult.Empty");
+                ShowError(uploadResult.Error);
                 _createDocumentVisible = false;
 
                 return null;
             }
 
-            return uploadResult.FileId;
+            return uploadResult.Value!.FileId;
         }
 
         return null;
