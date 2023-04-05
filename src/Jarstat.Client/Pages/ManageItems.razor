@@ -16,12 +16,12 @@
         <Button Type="@ButtonType.Primary" Disabled="@CreateDocumentButtonDisabled" OnClick="CreateDocumentOnButtonClick">Создать документ</Button>
         <Button Type="@ButtonType.Default" Disabled="@EditButtonDisabled" OnClick="EditOnButtonClick">Изменить</Button>
         <Button Type="@ButtonType.Default" Danger Disabled="@DeleteButtonDisabled" OnClick="() => _deleteItemVisible = true">Удалить</Button>
-        <DownloadButton Type="@ButtonType.Link" Disabled="@DownloadButtonDisabled" Url="@(selectedItem is null ? "#" : $"api/documents/download/{selectedItem.ItemId}")">Скачать</DownloadButton>
+        <DownloadButton Type="@ButtonType.Link" Disabled="@DownloadButtonDisabled" Url="@(selectedItem is null ? "#" : $"api/documents/download/{selectedItem.Id}")">Скачать</DownloadButton>
     </div>
     <Tree @ref="_tree"
           DataSource="items"
           TitleExpression="x => x.DataItem.DisplayName"
-          KeyExpression="x => x.DataItem.ItemId.ToString()"
+          KeyExpression="x => x.DataItem.Id.ToString()"
           ChildrenExpression="x => x.DataItem.Children"
           IsLeafExpression="@(x => x.DataItem.Type.Equals("Document"))"
           TItem="ItemResponse"

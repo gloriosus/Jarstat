@@ -23,7 +23,7 @@
               ShowLine="true"
               DataSource="folders"
               TitleExpression="x => x.DataItem.DisplayName"
-              KeyExpression="x => x.DataItem.ItemId.ToString()"
+              KeyExpression="x => x.DataItem.Id.ToString()"
               ChildrenExpression="x => x.DataItem.Children"
               IsLeafExpression="@(x => x.DataItem.Type.Equals("Document"))"
               TItem="ItemResponse"

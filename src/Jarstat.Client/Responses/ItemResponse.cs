@@ -3,17 +3,17 @@ using System.Text.Json.Serialization;
 
 namespace Jarstat.Client.Responses;
 
-public record ItemResponse : IDefault<ItemResponse>
+public record ItemResponse : IHierarchical<ItemResponse>, IDefault<ItemResponse>
 {
     [JsonConstructor]
     public ItemResponse(
-        Guid itemId, 
+        Guid id, 
         string displayName, 
         Guid? parentId, 
         string type,
         double sortOrder)
     {
-        ItemId = itemId;
+        Id = id;
         DisplayName = displayName;
         ParentId = parentId;
         Type = type;
@@ -22,8 +22,7 @@ public record ItemResponse : IDefault<ItemResponse>
 
     public static ItemResponse? Default => null;
 
-    [JsonPropertyName("id")]
-    public Guid ItemId { get; init; }
+    public Guid Id { get; init; }
     public string DisplayName { get; init; } = null!;
     public Guid? ParentId { get; init; }
     public string Type { get; init; } = null!;
@@ -32,5 +31,5 @@ public record ItemResponse : IDefault<ItemResponse>
     public double SortOrder { get; init; }
 
     [JsonIgnore]
-    public Assortment<ItemResponse> Children { get; set; } = new();
+    public IEnumerable<ItemResponse> Children { get; set; } = new Assortment<ItemResponse>();
 }

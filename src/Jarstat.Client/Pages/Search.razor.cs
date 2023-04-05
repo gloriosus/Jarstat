@@ -55,7 +55,7 @@ public partial class Search
         var dataItem = node.DataItem;
         dataItem.Children.Clear();
 
-        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{dataItem.ItemId}");
+        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{dataItem.Id}");
         var children = result?.Value!.Where(i => i.Type.Equals("Folder"))!;
 
         foreach (var child in children)

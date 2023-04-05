@@ -1,19 +1,21 @@
 ﻿using Jarstat.Client.Responses;
+using Jarstat.Domain.Abstractions;
 
 namespace Jarstat.Client.Extensions;
 
 public static class HierarchicalCollectionExtension
 {
-    public static async Task<ItemResponse?> FindItemResponseOrDefaultAsync(this Assortment<ItemResponse> collection, Guid itemId)
+    public static T? FindOrDefault<T>(this IEnumerable<T> collection, Guid id)
+        where T : IHierarchical<T>, IDefault<T>
     {
-        ItemResponse? result = null;
+        var result = T.Default;
 
         foreach (var item in collection)
         {
-            if (item.ItemId == itemId) 
+            if (item.Id == id) 
                 return item;
 
-            result = await item.Children.FindItemResponseOrDefaultAsync(itemId);
+            result = item.Children.FindOrDefault(id);
 
             if (result is not null) 
                 return result;

@@ -25,7 +25,7 @@ public partial class ManageItems
     [CascadingParameter]
     public ManageLayout Layout { get; set; }
 
-    private Assortment<ItemResponse> items { get; set; } = new();
+    private IEnumerable<ItemResponse> items { get; set; } = new Assortment<ItemResponse>();
     private Tree<ItemResponse> _tree = new();
 
     private string searchKey = string.Empty;
@@ -80,12 +80,24 @@ public partial class ManageItems
     #region LoadTreeData
     private async Task ReloadChildren(ItemResponse itemResponse)
     {
-        var result = await Http.GetFromJsonAsync<Result<Assortment<ItemResponse>>>($"api/items/children/{itemResponse.ItemId}");
-        var children = result?.Value!;
+        var result = await Http.GetFromJsonAsync<Result<Assortment<ItemResponse>>>($"api/items/children/{itemResponse.Id}");
 
-        itemResponse.Children.Clear();
+        if (result is null)
+            return;
+
+        if (result.IsFailure)
+        {
+            ShowError(result.Error);
+            return;
+        }
+
+        var children = result.Value!;
+
+        var collection = (Assortment<ItemResponse>)itemResponse.Children;
+
+        collection.Clear();
         foreach (var child in children)
-            itemResponse.Children.Add(child);
+            collection.Add(child);
     }
 
     private async Task OnNodeLoadDelayAsync(TreeEventArgs<ItemResponse> args)
@@ -102,8 +114,8 @@ public partial class ManageItems
 
         var reorderItemRequest = new ReorderItemRequest
         {
-            ItemId = moveableItem.ItemId,
-            TargetItemId = targetItem.ItemId,
+            ItemId = moveableItem.Id,
+            TargetItemId = targetItem.Id,
             DropPosition = dropPosition
         };
 
@@ -119,7 +131,7 @@ public partial class ManageItems
 
         foreach (var key in expandedKeys)
         {
-            var item = await items.FindItemResponseOrDefaultAsync(Guid.Parse(key));
+            var item = items.FindOrDefault(Guid.Parse(key));
             if (item is not null)
                 await ReloadChildren(item);
         }
@@ -133,7 +145,7 @@ public partial class ManageItems
             return;
         }
 
-        expandedKeys = expandedKeys.Append(e.Node.DataItem.ItemId.ToString());
+        expandedKeys = expandedKeys.Append(e.Node.DataItem.Id.ToString());
     }
 
     private async Task RemoveExpandedKeysRecursively(ItemResponse item)
@@ -143,7 +155,7 @@ public partial class ManageItems
             RemoveExpandedKeysRecursively(child);
         }
 
-        expandedKeys = expandedKeys.Remove(item.ItemId.ToString());
+        expandedKeys = expandedKeys.Remove(item.Id.ToString());
     }
 
     private async Task SetButtonsOnTreeClick(TreeEventArgs<ItemResponse> e)
@@ -190,10 +202,10 @@ public partial class ManageItems
         switch (selectedItem.Type)
         {
             case "Document":
-                isSuccess = await DeleteDocument(selectedItem.ItemId);
+                isSuccess = await DeleteDocument(selectedItem.Id);
                 break;
             case "Folder":
-                isSuccess = await DeleteFolder(selectedItem.ItemId);
+                isSuccess = await DeleteFolder(selectedItem.Id);
                 break;
         }
 
@@ -201,7 +213,7 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            var parent = items.FindOrDefault((Guid)selectedItem.ParentId!);
             if (parent is null)
                 return;
 
@@ -300,7 +312,7 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            var parent = items.FindOrDefault((Guid)selectedItem.ParentId!);
             if (parent is null)
                 return;
 
@@ -314,7 +326,7 @@ public partial class ManageItems
         if (userId is null) 
             return;
 
-        updateFolderRequest.FolderId = selectedItem.ItemId;
+        updateFolderRequest.FolderId = selectedItem.Id;
         updateFolderRequest.DisplayName = selectedItem.DisplayName;
         updateFolderRequest.VirtualPath = "empty";
         updateFolderRequest.ParentId = selectedItem.ParentId;
@@ -378,7 +390,7 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parent = await items.FindItemResponseOrDefaultAsync((Guid)selectedItem.ParentId!);
+            var parent = items.FindOrDefault((Guid)selectedItem.ParentId!);
             if (parent is null)
                 return;
 
@@ -392,11 +404,11 @@ public partial class ManageItems
         if (userId is null)
             return;
 
-        var documentResponse = await Http.GetFromJsonAsync<Result<DocumentResponse>>($"api/documents/{selectedItem.ItemId}");
+        var documentResponse = await Http.GetFromJsonAsync<Result<DocumentResponse>>($"api/documents/{selectedItem.Id}");
         if (documentResponse is null || documentResponse.IsFailure)
             return;
 
-        updateDocumentRequest.DocumentId = selectedItem.ItemId;
+        updateDocumentRequest.DocumentId = selectedItem.Id;
         updateDocumentRequest.DisplayName = selectedItem.DisplayName;
         updateDocumentRequest.FileName = documentResponse.Value!.FileName;
         updateDocumentRequest.FolderId = (Guid)selectedItem.ParentId!;
@@ -456,7 +468,7 @@ public partial class ManageItems
         }
 
         createFolderRequest.VirtualPath = "empty";
-        createFolderRequest.ParentId = selectedItem.ItemId;
+        createFolderRequest.ParentId = selectedItem.Id;
         createFolderRequest.CreatorId = (Guid)await GetLoggedUserId();
 
         bool isSuccess = await CreateFolder(createFolderRequest);
@@ -470,7 +482,7 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parent = await items.FindItemResponseOrDefaultAsync(selectedItem.ItemId);
+            var parent = items.FindOrDefault(selectedItem.Id);
             if (parent is null)
                 return;
 
@@ -527,7 +539,7 @@ public partial class ManageItems
 
         createDocumentRequest.FileId = await UploadFile();
         createDocumentRequest.FileName = uploadedFile.Name;
-        createDocumentRequest.FolderId = selectedItem.ItemId;
+        createDocumentRequest.FolderId = selectedItem.Id;
         createDocumentRequest.CreatorId = (Guid)await GetLoggedUserId();
 
         bool isSuccess = await CreateDocument(createDocumentRequest);
@@ -538,7 +550,7 @@ public partial class ManageItems
 
         if (isSuccess)
         {
-            var parent = await items.FindItemResponseOrDefaultAsync(selectedItem.ItemId);
+            var parent = items.FindOrDefault(selectedItem.Id);
             if (parent is null)
                 return;
 
@@ -562,7 +574,7 @@ public partial class ManageItems
     private async Task DownloadFileOnDblClick(TreeEventArgs<ItemResponse> e)
     {
         var item = e.Node.DataItem;
-        await js.InvokeVoidAsync(JSInteropConstants.TriggerFileDownload, null, $"api/documents/download/{item.ItemId}");
+        await js.InvokeVoidAsync(JSInteropConstants.TriggerFileDownload, null, $"api/documents/download/{item.Id}");
     }
 
     private void ShowError(Error error)
