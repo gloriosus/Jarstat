@@ -4,4 +4,4 @@ using MediatR;
 
 namespace Jarstat.Application.Queries;
 
-public class GetAllItemsQuery : IRequest<Result<List<Item>>> { }
+public class GetAllItemsQuery : IRequest<Result<Assortment<Item>>> { }

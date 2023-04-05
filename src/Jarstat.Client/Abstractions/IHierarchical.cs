@@ -1,4 +1,4 @@
-﻿namespace Jarstat.Client.Responses;
+﻿namespace Jarstat.Client.Abstractions;
 
 public interface IHierarchical<T>
 {

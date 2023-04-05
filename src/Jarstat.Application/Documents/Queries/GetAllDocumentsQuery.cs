@@ -4,4 +4,4 @@ using MediatR;
 
 namespace Jarstat.Application.Queries;
 
-public class GetAllDocumentsQuery : IRequest<Result<List<Document>>> { }
+public class GetAllDocumentsQuery : IRequest<Result<Assortment<Document>>> { }

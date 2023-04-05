@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class GetDocumentByIdHandler : IRequestHandler<GetDocumentByIdQuery, Result<Document?>>
+public class GetDocumentByIdHandler : IRequestHandler<GetDocumentByIdQuery, Result<Document>>
 {
     private readonly IDocumentRepository _documentRepository;
 
@@ -16,12 +16,12 @@ public class GetDocumentByIdHandler : IRequestHandler<GetDocumentByIdQuery, Resu
         _documentRepository = documentRepository;
     }
 
-    public async Task<Result<Document?>> Handle(GetDocumentByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<Document>> Handle(GetDocumentByIdQuery request, CancellationToken cancellationToken)
     {
         var result = await _documentRepository.GetByIdAsync(request.Id);
         if (result is null)
-            return Result<Document?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString());
 
         return result;
     }

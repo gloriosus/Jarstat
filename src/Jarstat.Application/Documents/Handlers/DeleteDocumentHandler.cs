@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class DeleteDocumentHandler : IRequestHandler<DeleteDocumentCommand, Result<Document?>>
+public class DeleteDocumentHandler : IRequestHandler<DeleteDocumentCommand, Result<Document>>
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IFileRepository _fileRepository;
@@ -20,12 +20,12 @@ public class DeleteDocumentHandler : IRequestHandler<DeleteDocumentCommand, Resu
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Document?>> Handle(DeleteDocumentCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Document>> Handle(DeleteDocumentCommand request, CancellationToken cancellationToken)
     {
         var document = await _documentRepository.GetByIdAsync(request.Id);
         if (document is null)
-            return Result<Document?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString());
 
         if (document.FileId is not null)
         {
@@ -42,8 +42,7 @@ public class DeleteDocumentHandler : IRequestHandler<DeleteDocumentCommand, Resu
         }
         catch (Exception ex)
         {
-            return Result<Document?>.Failure(DomainErrors.Exception
-                .WithParameters(ex.InnerException?.Message!));
+            return DomainErrors.Exception.WithParameters(ex.InnerException?.Message!);
         }
 
         return result;

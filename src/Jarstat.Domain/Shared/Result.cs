@@ -36,4 +36,10 @@ public class Result<T> where T : IDefault<T>
     {
         return new Result<TDestination>(TDestination.Default, IsSuccess, Error);
     }
+
+    public Result<TDestination> AsResult<TDestination>(TDestination value)
+        where TDestination : IDefault<TDestination>
+    {
+        return new Result<TDestination>(value, IsSuccess, Error);
+    }
 }

@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class SearchUsersCommand : IRequest<Result<SearchResult<User>>>
+public class SearchUsersCommand : IRequest<Result<SearchValue<User>>>
 {
     public string? UserName { get; set; }
     public int Skip { get; set; }

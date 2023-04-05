@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Queries;
 
-public class GetUserByIdQuery : IRequest<Result<User?>>
+public class GetUserByIdQuery : IRequest<Result<User>>
 {
     public GetUserByIdQuery(Guid id) => Id = id;
 

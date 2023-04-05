@@ -6,7 +6,7 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class GetAllFoldersHandler : IRequestHandler<GetAllFoldersQuery, Result<List<Folder>>>
+public class GetAllFoldersHandler : IRequestHandler<GetAllFoldersQuery, Result<Assortment<Folder>>>
 {
     private readonly IFolderRepository _folderRepository;
 
@@ -15,7 +15,7 @@ public class GetAllFoldersHandler : IRequestHandler<GetAllFoldersQuery, Result<L
         _folderRepository = folderRepository;
     }
 
-    public async Task<Result<List<Folder>>> Handle(GetAllFoldersQuery request, CancellationToken cancellationToken)
+    public async Task<Result<Assortment<Folder>>> Handle(GetAllFoldersQuery request, CancellationToken cancellationToken)
     {
         var result = await _folderRepository.GetAllAsync();
         return result;

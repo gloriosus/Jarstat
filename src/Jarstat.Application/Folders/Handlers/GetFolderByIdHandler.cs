@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class GetFolderByIdHandler : IRequestHandler<GetFolderByIdQuery, Result<Folder?>>
+public class GetFolderByIdHandler : IRequestHandler<GetFolderByIdQuery, Result<Folder>>
 {
     private readonly IFolderRepository _folderRepository;
 
@@ -16,12 +16,12 @@ public class GetFolderByIdHandler : IRequestHandler<GetFolderByIdQuery, Result<F
         _folderRepository = folderRepository;
     }
 
-    public async Task<Result<Folder?>> Handle(GetFolderByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<Folder>> Handle(GetFolderByIdQuery request, CancellationToken cancellationToken)
     {
         var result = await _folderRepository.GetByIdAsync(request.Id);
         if (result is null)
-            return Result<Folder?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString());
 
         return result;
     }

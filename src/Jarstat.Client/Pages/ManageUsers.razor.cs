@@ -62,7 +62,7 @@ public partial class ManageUsers
         searchUsersRequest.Take = _size;
 
         var response = await Http.PostAsJsonAsync("api/users/search", searchUsersRequest);
-        var result = await response.Content.ReadFromJsonAsync<Result<SearchResultResponse<UserResponse>>>();
+        var result = await response.Content.ReadFromJsonAsync<Result<SearchResponse<UserResponse>>>();
         if (!response.IsSuccessStatusCode)
         {
             Layout.ErrorType = AlertType.Error;
@@ -89,7 +89,7 @@ public partial class ManageUsers
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<UserResponse?>>();
+            var result = await response.Content.ReadFromJsonAsync<Result<UserResponse>>();
 
             Layout.ErrorType = AlertType.Error;
             Layout.ErrorCode = result!.Error.Code;
@@ -142,7 +142,7 @@ public partial class ManageUsers
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<UserResponse?>>();
+            var result = await response.Content.ReadFromJsonAsync<Result<UserResponse>>();
 
             Layout.ErrorType = AlertType.Error;
             Layout.ErrorCode = result!.Error.Code;
@@ -186,7 +186,7 @@ public partial class ManageUsers
 
         if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<UserResponse?>>();
+            var result = await response.Content.ReadFromJsonAsync<Result<UserResponse>>();
 
             Layout.ErrorType = AlertType.Error;
             Layout.ErrorCode = result!.Error.Code;

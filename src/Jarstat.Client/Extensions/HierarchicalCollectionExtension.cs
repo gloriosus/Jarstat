@@ -1,4 +1,4 @@
-﻿using Jarstat.Client.Responses;
+﻿using Jarstat.Client.Abstractions;
 using Jarstat.Domain.Abstractions;
 
 namespace Jarstat.Client.Extensions;

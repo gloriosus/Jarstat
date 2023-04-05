@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Jarstat.Application.Handlers;
 
-public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<User?>>
+public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<User>>
 {
     private readonly UserManager<User> _userManager;
 
@@ -16,12 +16,12 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<User?
         _userManager = userManager;
     }
 
-    public async Task<Result<User?>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<User>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         var creator = await _userManager.FindByIdAsync(request.CreatorId?.ToString()!);
         if (request.CreatorId is not null && creator is null)
-            return Result<User?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.CreatorId), typeof(Guid).ToString(), request.CreatorId?.ToString()!));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.CreatorId), typeof(Guid).ToString(), request.CreatorId?.ToString()!);
 
         var userCreationResult = User.Create(request.UserName, creator);
         if (userCreationResult.IsFailure)
@@ -33,8 +33,7 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<User?
         if (!userManagerResult.Succeeded)
         {
             var errors = userManagerResult.Errors.Select(e => e.Description).ToArray();
-            return Result<User?>.Failure(DomainErrors.Identity
-                .WithParameters(errors));
+            return DomainErrors.Identity.WithParameters(errors);
         }
 
         return userCreationResult;

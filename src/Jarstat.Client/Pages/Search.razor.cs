@@ -23,8 +23,8 @@ public partial class Search
 
     private SearchDocumentsRequest searchDocumentRequest = new();
 
-    private List<DocumentResponse> documents = new();
-    private List<ItemResponse> folders = new();
+    private IEnumerable<DocumentResponse> documents = new Assortment<DocumentResponse>();
+    private IEnumerable<ItemResponse> folders = new Assortment<ItemResponse>();
 
     private string[] checkedKeys;
 
@@ -34,7 +34,7 @@ public partial class Search
         searchDocumentRequest.Take = _size;
 
         var response = await Http.PostAsJsonAsync("api/documents/search", searchDocumentRequest);
-        var result = await response.Content.ReadFromJsonAsync<Result<SearchResultResponse<DocumentResponse>>>();
+        var result = await response.Content.ReadFromJsonAsync<Result<SearchResponse<DocumentResponse>>>();
         if (!response.IsSuccessStatusCode)
         {
             Layout.ErrorType = AlertType.Error;
@@ -53,13 +53,14 @@ public partial class Search
     private async Task LoadChildren(TreeNode<ItemResponse> node)
     {
         var dataItem = node.DataItem;
-        dataItem.Children.Clear();
+        var collection = (Assortment<ItemResponse>)dataItem.Children;
+        collection.Clear();
 
-        var result = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>($"api/items/children/{dataItem.Id}");
+        var result = await Http.GetFromJsonAsync<Result<Assortment<ItemResponse>>>($"api/items/children/{dataItem.Id}");
         var children = result?.Value!.Where(i => i.Type.Equals("Folder"))!;
 
         foreach (var child in children)
-            dataItem.Children.Add(child);
+            collection.Add(child);
     }
 
     private async Task OnNodeLoadDelayAsync(TreeEventArgs<ItemResponse> args)
@@ -76,7 +77,7 @@ public partial class Search
     {
         await LoadDocuments();
 
-        var foldersResult = await Http.GetFromJsonAsync<Result<List<ItemResponse>>>("api/items/roots");
+        var foldersResult = await Http.GetFromJsonAsync<Result<Assortment<ItemResponse>>>("api/items/roots");
         folders = foldersResult?.Value!;
 
         notifyStateService!.EventClick += OnSearchButtonClicked;

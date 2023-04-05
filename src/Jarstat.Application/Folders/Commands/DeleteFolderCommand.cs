@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class DeleteFolderCommand : IRequest<Result<Folder?>>
+public class DeleteFolderCommand : IRequest<Result<Folder>>
 {
     public DeleteFolderCommand(Guid id) => Id = id;
 

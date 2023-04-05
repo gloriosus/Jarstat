@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class DeleteUserCommand : IRequest<Result<User?>>
+public class DeleteUserCommand : IRequest<Result<User>>
 {
     public DeleteUserCommand(Guid id) => Id = id;
 

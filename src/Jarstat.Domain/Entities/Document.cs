@@ -1,4 +1,5 @@
-﻿using Jarstat.Domain.Errors;
+﻿using Jarstat.Domain.Abstractions;
+using Jarstat.Domain.Errors;
 using Jarstat.Domain.Primitives;
 using Jarstat.Domain.Records;
 using Jarstat.Domain.Shared;
@@ -6,7 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace Jarstat.Domain.Entities;
 
-public class Document : Entity
+public class Document : Entity, IDefault<Document>
 {
     private Document() { }
 
@@ -72,46 +73,18 @@ public class Document : Entity
     public File? File { get; private set; }
     public double SortOrder { get; private set; }
 
-    public static explicit operator Item?(Document? document) => 
-        document is null ? null : new Item(document.Id, 
-                                           document.DisplayName, 
-                                           document.FolderId, 
-                                           "Document", 
-                                           document.DateTimeCreated, 
-                                           document.DateTimeUpdated, 
-                                           document.SortOrder);
+    public static Document? Default => null;
 
-    //public static Result<Document> Create(
-    //    string displayName, 
-    //    string fileName,
-    //    Folder folder, 
-    //    string? description, 
-    //    User creator,
-    //    File file)
-    //{
-    //    if (string.IsNullOrWhiteSpace(displayName) || string.IsNullOrWhiteSpace(fileName))
-    //        return Result<Document>.Failure(DomainErrors.ArgumentNullOrWhiteSpaceValue);
+    public static explicit operator Item(Document document) => new Item(
+        document.Id, 
+        document.DisplayName,
+        document.FolderId,
+        "Document",
+        document.DateTimeCreated,
+        document.DateTimeUpdated,
+        document.SortOrder);
 
-    //    if (folder is null || creator is null || file is null)
-    //        return Result<Document>.Failure(DomainErrors.ArgumentNullValue);
-
-    //    var lastUpdater = creator;
-    //    var document = new Document(
-    //        Guid.NewGuid(), 
-    //        displayName, 
-    //        fileName, 
-    //        folder, 
-    //        description, 
-    //        DateTime.UtcNow, 
-    //        DateTime.UtcNow, 
-    //        creator, 
-    //        lastUpdater, 
-    //        file);
-
-    //    return document;
-    //}
-
-    public static Result<Document?> Create(
+    public static Result<Document> Create(
         string displayName,
         string fileName,
         Folder folder,
@@ -120,20 +93,20 @@ public class Document : Entity
         Guid? fileId)
     {
         if (string.IsNullOrWhiteSpace(displayName))
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullOrWhiteSpaceValue
-                .WithParameters(nameof(displayName), typeof(string).ToString()));
+            return DomainErrors.ArgumentNullOrWhiteSpaceValue
+                .WithParameters(nameof(displayName), typeof(string).ToString());
 
         if (string.IsNullOrWhiteSpace(fileName))
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullOrWhiteSpaceValue
-                .WithParameters(nameof(fileName), typeof(string).ToString()));
+            return DomainErrors.ArgumentNullOrWhiteSpaceValue
+                .WithParameters(nameof(fileName), typeof(string).ToString());
 
         if (folder is null)
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullValue
-                .WithParameters(nameof(folder), typeof(Folder).ToString()));
+            return DomainErrors.ArgumentNullValue
+                .WithParameters(nameof(folder), typeof(Folder).ToString());
 
         if (creator is null)
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullValue
-                .WithParameters(nameof(creator), typeof(User).ToString()));
+            return DomainErrors.ArgumentNullValue
+                .WithParameters(nameof(creator), typeof(User).ToString());
 
         var lastUpdater = creator;
         var document = new Document(
@@ -152,7 +125,7 @@ public class Document : Entity
         return document;
     }
 
-    public Result<Document?> Update(
+    public Result<Document> Update(
         string displayName,
         string fileName,
         Folder folder,
@@ -161,20 +134,20 @@ public class Document : Entity
         Guid? fileId)
     {
         if (string.IsNullOrWhiteSpace(displayName))
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullOrWhiteSpaceValue
-                .WithParameters(nameof(displayName), typeof(string).ToString()));
+            return DomainErrors.ArgumentNullOrWhiteSpaceValue
+                .WithParameters(nameof(displayName), typeof(string).ToString());
 
         if (string.IsNullOrWhiteSpace(fileName))
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullOrWhiteSpaceValue
-                .WithParameters(nameof(fileName), typeof(string).ToString()));
+            return DomainErrors.ArgumentNullOrWhiteSpaceValue
+                .WithParameters(nameof(fileName), typeof(string).ToString());
 
         if (folder is null)
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullValue
-                .WithParameters(nameof(folder), typeof(Folder).ToString()));
+            return DomainErrors.ArgumentNullValue
+                .WithParameters(nameof(folder), typeof(Folder).ToString());
 
         if (lastUpdater is null)
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullValue
-                .WithParameters(nameof(lastUpdater), typeof(User).ToString()));
+            return DomainErrors.ArgumentNullValue
+                .WithParameters(nameof(lastUpdater), typeof(User).ToString());
 
         DisplayName = displayName;
         FileName = fileName;
@@ -186,11 +159,11 @@ public class Document : Entity
         return this;
     }
 
-    public Result<Document?> WithFile(File file)
+    public Result<Document> WithFile(File file)
     {
         if (file is null)
-            return Result<Document?>.Failure(DomainErrors.ArgumentNullValue
-                .WithParameters(nameof(file), typeof(File).ToString()));
+            return DomainErrors.ArgumentNullValue
+                .WithParameters(nameof(file), typeof(File).ToString());
 
         var document = new Document(
             this.Id,
@@ -208,11 +181,11 @@ public class Document : Entity
         return document;
     }
 
-    public Result<Document?> ChangeSortOrder(double sortOrder)
+    public Result<Document> ChangeSortOrder(double sortOrder)
     {
         if (sortOrder < 0)
-            return Result<Document?>.Failure(new Error("Error.ArgumentLessThanZeroValue", "Значение параметра не может быть меньше нуля")
-                .WithParameters(nameof(sortOrder), typeof(double).ToString()));
+            return new Error("Error.ArgumentLessThanZeroValue", "Значение параметра не может быть меньше нуля")
+                .WithParameters(nameof(sortOrder), typeof(double).ToString());
 
         SortOrder = sortOrder;
 

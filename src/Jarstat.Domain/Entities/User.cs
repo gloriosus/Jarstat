@@ -1,12 +1,15 @@
-﻿using Jarstat.Domain.Errors;
+﻿using Jarstat.Domain.Abstractions;
+using Jarstat.Domain.Errors;
 using Jarstat.Domain.Shared;
 using Microsoft.AspNetCore.Identity;
 using System.Text.Json.Serialization;
 
 namespace Jarstat.Domain.Entities;
 
-public class User : IdentityUser<Guid>
-{ 
+public class User : IdentityUser<Guid>, IDefault<User>
+{
+    public static User? Default => null;
+
     public DateTime DateTimeCreated { get; protected init; }
     public DateTime DateTimeUpdated { get; protected set; }
     public Guid? CreatorId { get; protected init; }
@@ -18,10 +21,10 @@ public class User : IdentityUser<Guid>
     [JsonIgnore]
     public User? LastUpdater { get; protected set; }
 
-    public static Result<User?> Create(string username, User? creator)
+    public static Result<User> Create(string username, User? creator)
     {
         if (string.IsNullOrWhiteSpace(username))
-            return Result<User?>.Failure(DomainErrors.ArgumentNullOrWhiteSpaceValue
+            return Result<User>.Failure(DomainErrors.ArgumentNullOrWhiteSpaceValue
                 .WithParameters(nameof(username), typeof(string).ToString()));
 
         return new User

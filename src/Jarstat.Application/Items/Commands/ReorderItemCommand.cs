@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class ReorderItemCommand : IRequest<Result<Item?>>
+public class ReorderItemCommand : IRequest<Result<Item>>
 {
     public Guid ItemId { get; set; }
     public Guid TargetItemId { get; set; }

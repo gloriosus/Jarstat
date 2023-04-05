@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Queries;
 
-public class GetChildrenQuery : IRequest<Result<List<Item>>>
+public class GetChildrenQuery : IRequest<Result<Assortment<Item>>>
 {
     public GetChildrenQuery(Guid parentId) => ParentId = parentId;
 

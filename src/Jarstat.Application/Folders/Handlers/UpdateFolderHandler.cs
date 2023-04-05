@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Jarstat.Application.Handlers;
 
-public class UpdateFolderHandler : IRequestHandler<UpdateFolderCommand, Result<Folder?>>
+public class UpdateFolderHandler : IRequestHandler<UpdateFolderCommand, Result<Folder>>
 {
     private readonly IFolderRepository _folderRepository;
     private readonly UserManager<User> _userManager;
@@ -24,12 +24,12 @@ public class UpdateFolderHandler : IRequestHandler<UpdateFolderCommand, Result<F
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Folder?>> Handle(UpdateFolderCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Folder>> Handle(UpdateFolderCommand request, CancellationToken cancellationToken)
     {
         var folder = await _folderRepository.GetByIdAsync(request.Id);
         if (folder is null)
-            return Result<Folder?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString());
 
         Folder? parent = null;
         if (request.ParentId is not null)
@@ -37,8 +37,8 @@ public class UpdateFolderHandler : IRequestHandler<UpdateFolderCommand, Result<F
 
         var lastUpdater = await _userManager.FindByIdAsync(request.LastUpdaterId.ToString());
         if (lastUpdater is null)
-            return Result<Folder?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.LastUpdaterId), typeof(Guid).ToString(), request.LastUpdaterId.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.LastUpdaterId), typeof(Guid).ToString(), request.LastUpdaterId.ToString());
 
         var folderUpdatingResult = folder.Update(request.DisplayName, request.VirtualPath, parent, lastUpdater);
         if (folderUpdatingResult.IsFailure)
@@ -52,8 +52,7 @@ public class UpdateFolderHandler : IRequestHandler<UpdateFolderCommand, Result<F
         }
         catch (Exception ex)
         {
-            return Result<Folder?>.Failure(DomainErrors.Exception
-                .WithParameters(ex.InnerException?.Message!));
+            return DomainErrors.Exception.WithParameters(ex.InnerException?.Message!);
         }
 
         return result;

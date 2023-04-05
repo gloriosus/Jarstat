@@ -6,7 +6,7 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class GetAllDocumentsHandler : IRequestHandler<GetAllDocumentsQuery, Result<List<Document>>>
+public class GetAllDocumentsHandler : IRequestHandler<GetAllDocumentsQuery, Result<Assortment<Document>>>
 {
     private readonly IDocumentRepository _documentRepository;
 
@@ -15,7 +15,7 @@ public class GetAllDocumentsHandler : IRequestHandler<GetAllDocumentsQuery, Resu
         _documentRepository = documentRepository;
     }
 
-    public async Task<Result<List<Document>>> Handle(GetAllDocumentsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<Assortment<Document>>> Handle(GetAllDocumentsQuery request, CancellationToken cancellationToken)
     {
         var result = await _documentRepository.GetAllAsync();
         return result;

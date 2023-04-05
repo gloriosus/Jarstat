@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
-using Jarstat.Application.Abstractions;
 using Jarstat.Application.Services;
 using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
@@ -32,8 +31,6 @@ builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<AbstractDocumentCreationService, DocumentCreationService>();
-builder.Services.AddScoped<AbstractDocumentUpdatingService, DocumentUpdatingService>();
 
 builder.Services.AddIdentity<User, Role>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()

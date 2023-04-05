@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class UpdateFolderCommand : IRequest<Result<Folder?>>
+public class UpdateFolderCommand : IRequest<Result<Folder>>
 {
     public Guid Id { get; set; }
     public string DisplayName { get; set; } = null!;

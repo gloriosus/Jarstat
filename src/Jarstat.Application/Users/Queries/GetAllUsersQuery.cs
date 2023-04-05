@@ -4,6 +4,6 @@ using MediatR;
 
 namespace Jarstat.Application.Queries;
 
-public class GetAllUsersQuery : IRequest<Result<List<User>>>
+public class GetAllUsersQuery : IRequest<Result<Assortment<User>>>
 {
 }

@@ -1,5 +1,7 @@
 ﻿using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
+using Jarstat.Domain.Shared;
+using Jarstat.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jarstat.Infrastructure.Repositories;
@@ -13,17 +15,17 @@ public class FolderRepository : IFolderRepository
         _dbContext = dbContext;
     }
 
-    public async Task<List<Folder>> GetAllAsync()
+    public async Task<Assortment<Folder>> GetAllAsync()
     {
         var result = await _dbContext.Set<Folder>()
             .Include(f => f.Creator)
             .Include(f => f.LastUpdater)
-            .ToListAsync();
+            .ToAssortmentAsync();
 
         return result;
     }
 
-    public async Task<Folder?> GetByIdAsync(Guid id)
+    public async Task<Folder> GetByIdAsync(Guid id)
     {
         var result = await _dbContext.Set<Folder>()
             .Include(f => f.Creator)
@@ -33,7 +35,7 @@ public class FolderRepository : IFolderRepository
         return result;
     }
 
-    public async Task<Folder?> GetByVirtualPathAsync(string virtualPath)
+    public async Task<Folder> GetByVirtualPathAsync(string virtualPath)
     {
         var result = await _dbContext.Set<Folder>()
             .FirstOrDefaultAsync(f => f.VirtualPath.ToLower().Equals(virtualPath.ToLower()));
@@ -41,31 +43,31 @@ public class FolderRepository : IFolderRepository
         return result;
     }
 
-    public async Task<Folder?> CreateAsync(Folder folder)
+    public async Task<Folder> CreateAsync(Folder folder)
     {
         var result = await _dbContext.Set<Folder>().AddAsync(folder);
         return result.Entity;
     }
 
-    public Folder? Update(Folder folder)
+    public Folder Update(Folder folder)
     {
         var result = _dbContext.Set<Folder>().Update(folder);
         return result.Entity;
     }
 
-    public Folder? Delete(Folder folder)
+    public Folder Delete(Folder folder)
     {
         var result = _dbContext.Set<Folder>().Remove(folder);
         return result.Entity;
     }
 
-    public async Task<List<Folder>> GetByParentId(Guid? parentId)
+    public async Task<Assortment<Folder>> GetByParentId(Guid? parentId)
     {
         var result = await _dbContext.Set<Folder>()
             .Include(f => f.Creator)
             .Include(f => f.LastUpdater)
             .Where(f => f.ParentId.Equals(parentId))
-            .ToListAsync();
+            .ToAssortmentAsync();
 
         return result;
     }

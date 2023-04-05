@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class UpdateUserCommand : IRequest<Result<User?>>
+public class UpdateUserCommand : IRequest<Result<User>>
 {
     public Guid Id { get; set; }
     public string Password { get; set; } = null!;

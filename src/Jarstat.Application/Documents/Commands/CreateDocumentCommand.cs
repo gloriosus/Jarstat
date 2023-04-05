@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class CreateDocumentCommand : IRequest<Result<Document?>>
+public class CreateDocumentCommand : IRequest<Result<Document>>
 {
     public string DisplayName { get; set; } = null!;
     public string FileName { get; set; } = null!;

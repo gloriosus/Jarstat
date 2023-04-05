@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class SearchDocumentsCommand : IRequest<Result<SearchResult<Document>>>
+public class SearchDocumentsCommand : IRequest<Result<SearchValue<Document>>>
 {
     public string? DisplayName { get; set; }
     public Guid[] ParentIds { get; set; } = Array.Empty<Guid>();

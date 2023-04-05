@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class DownloadFileHandler : IRequestHandler<DownloadFileQuery, Result<Document?>>
+public class DownloadFileHandler : IRequestHandler<DownloadFileQuery, Result<Document>>
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IFileRepository _fileRepository;
@@ -18,17 +18,17 @@ public class DownloadFileHandler : IRequestHandler<DownloadFileQuery, Result<Doc
         _fileRepository = fileRepository;
     }
 
-    public async Task<Result<Document?>> Handle(DownloadFileQuery request, CancellationToken cancellationToken)
+    public async Task<Result<Document>> Handle(DownloadFileQuery request, CancellationToken cancellationToken)
     {
         var document = await _documentRepository.GetByIdAsync(request.Id);
         if (document is null)
-            return Result<Document?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString());
 
         var file = await _fileRepository.GetByIdAsync(document.FileId);
         if (file is null)
-            return Result<Document?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(document.FileId), typeof(Guid?).ToString(), document.FileId?.ToString()!));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(document.FileId), typeof(Guid?).ToString(), document.FileId?.ToString()!);
 
         var result = document.WithFile(file);
 

@@ -1,7 +1,7 @@
 ﻿using Jarstat.Domain.Abstractions;
 using System.Collections;
 
-namespace Jarstat.Client.Responses;
+namespace Jarstat.Domain.Shared;
 
 public class Assortment<T> : IList<T>, IDefault<Assortment<T>>
 {

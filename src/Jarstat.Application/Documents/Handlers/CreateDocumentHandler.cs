@@ -1,5 +1,4 @@
-﻿using Jarstat.Application.Abstractions;
-using Jarstat.Application.Commands;
+﻿using Jarstat.Application.Commands;
 using Jarstat.Application.Services;
 using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
@@ -11,7 +10,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Jarstat.Application.Handlers;
 
-public class CreateDocumentHandler : IRequestHandler<CreateDocumentCommand, Result<Document?>>
+public class CreateDocumentHandler : IRequestHandler<CreateDocumentCommand, Result<Document>>
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IFolderRepository _folderRepository;
@@ -30,7 +29,7 @@ public class CreateDocumentHandler : IRequestHandler<CreateDocumentCommand, Resu
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Document?>> Handle(CreateDocumentCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Document>> Handle(CreateDocumentCommand request, CancellationToken cancellationToken)
     {
         var documentCreationResult = await CreateAsync(request);
         if (documentCreationResult.IsFailure)
@@ -52,24 +51,23 @@ public class CreateDocumentHandler : IRequestHandler<CreateDocumentCommand, Resu
         }
         catch (Exception ex)
         {
-            return Result<Document?>.Failure(DomainErrors.Exception
-                .WithParameters(ex.InnerException?.Message!));
+            return DomainErrors.Exception.WithParameters(ex.InnerException?.Message!);
         }
 
         return result;
     }
 
-    private async Task<Result<Document?>> CreateAsync(CreateDocumentCommand request)
+    private async Task<Result<Document>> CreateAsync(CreateDocumentCommand request)
     {
         var folder = await _folderRepository.GetByIdAsync(request.FolderId);
         if (folder is null)
-            return Result<Document?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.FolderId), typeof(Guid).ToString(), request.FolderId.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.FolderId), typeof(Guid).ToString(), request.FolderId.ToString());
 
         var creator = await _userManager.FindByIdAsync(request.CreatorId.ToString());
         if (creator is null)
-            return Result<Document?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.CreatorId), typeof(Guid).ToString(), request.CreatorId.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.CreatorId), typeof(Guid).ToString(), request.CreatorId.ToString());
 
         var documentCreationResult = Document.Create(
             request.DisplayName,
@@ -82,7 +80,7 @@ public class CreateDocumentHandler : IRequestHandler<CreateDocumentCommand, Resu
         return documentCreationResult;
     }
 
-    private async Task<Result<Document?>> DowngradeDocumentsAbove(Document createdDocument, CreateDocumentCommand request)
+    private async Task<Result<Document>> DowngradeDocumentsAbove(Document createdDocument, CreateDocumentCommand request)
     {
         var documentsInFolder = (await _documentRepository.GetByFolderId(request.FolderId))
                                                           .Where(d => d.Id != createdDocument.Id);
@@ -96,10 +94,10 @@ public class CreateDocumentHandler : IRequestHandler<CreateDocumentCommand, Resu
             _documentRepository.Update(orderedDocument);
         }
 
-        return Result<Document?>.Success(default);
+        return Document.Default;
     }
 
-    private async Task<Result<Document?>> DowngradeFoldersAbove(CreateDocumentCommand request)
+    private async Task<Result<Document>> DowngradeFoldersAbove(CreateDocumentCommand request)
     {
         var foldersInFolder = await _folderRepository.GetByParentId(request.FolderId);
 
@@ -107,13 +105,12 @@ public class CreateDocumentHandler : IRequestHandler<CreateDocumentCommand, Resu
         {
             var folderOrderingResult = folder.ChangeSortOrder(folder.SortOrder / 2);
             if (folderOrderingResult.IsFailure)
-                // TODO: Change later
-                return Result<Document?>.Failure(folderOrderingResult.Error);
+                return folderOrderingResult.AsResult<Document>();
 
             var orderedFolder = folderOrderingResult.Value!;
             _folderRepository.Update(orderedFolder);
         }
 
-        return Result<Document?>.Success(default);
+        return Document.Default;
     }
 }

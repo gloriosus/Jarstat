@@ -1,8 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿using Jarstat.Domain.Abstractions;
+using System.Text.Json.Serialization;
 
 namespace Jarstat.Client.Responses;
 
-public record UserResponse
+public record UserResponse : IDefault<UserResponse>
 {
     [JsonConstructor]
     public UserResponse(
@@ -21,6 +22,8 @@ public record UserResponse
         LastUpdaterId = lastUpdaterId;
     }
 
+    public static UserResponse? Default => null;
+
     [JsonPropertyName("id")]
     public Guid UserId { get; init; }
     public string UserName { get; init; } = null!;
@@ -28,6 +31,4 @@ public record UserResponse
     public DateTime DateTimeUpdated { get; init; }
     public Guid? CreatorId { get; init; }
     public Guid? LastUpdaterId { get; init; }
-    //public UserResponse? Creator { get; init; } = null!;
-    //public UserResponse? LastUpdater { get; init; } = null!;
 }

@@ -1,5 +1,7 @@
 ﻿using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Records;
+using Jarstat.Domain.Shared;
+using Jarstat.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jarstat.Infrastructure.Repositories;
@@ -10,16 +12,16 @@ public class ItemRepository : IItemRepository
 
     public ItemRepository(ApplicationDbContext dbContext) => _dbContext = dbContext;
 
-    public async Task<List<Item>> GetAllAsync()
+    public async Task<Assortment<Item>> GetAllAsync()
     {
         var result = await _dbContext.Set<Item>()
             .FromSqlRaw("SELECT \"Id\", \"DisplayName\", \"ParentId\", \"Type\", \"DateTimeCreated\", \"DateTimeUpdated\", \"SortOrder\" FROM \"ItemsView\"")
-            .ToListAsync();
+            .ToAssortmentAsync();
 
         return result;
     }
 
-    public async Task<Item?> GetByIdAsync(Guid id)
+    public async Task<Item> GetByIdAsync(Guid id)
     {
         var result = await _dbContext.Set<Item>()
             .FromSqlRaw($"SELECT \"Id\", \"DisplayName\", \"ParentId\", \"Type\", \"DateTimeCreated\", \"DateTimeUpdated\", \"SortOrder\" FROM \"ItemsView\" WHERE \"Id\" = '{id}'")
@@ -28,20 +30,20 @@ public class ItemRepository : IItemRepository
         return result;
     }
 
-    public async Task<List<Item>> GetRootsAsync()
+    public async Task<Assortment<Item>> GetRootsAsync()
     {
         var result = await _dbContext.Set<Item>()
             .FromSqlRaw("SELECT \"Id\", \"DisplayName\", \"ParentId\", \"Type\", \"DateTimeCreated\", \"DateTimeUpdated\", \"SortOrder\" FROM \"ItemsView\" WHERE \"ParentId\" IS NULL ORDER BY \"SortOrder\"")
-            .ToListAsync();
+            .ToAssortmentAsync();
 
         return result;
     }
 
-    public async Task<List<Item>> GetChildrenAsync(Guid parentId)
+    public async Task<Assortment<Item>> GetChildrenAsync(Guid parentId)
     {
         var result = await _dbContext.Set<Item>()
             .FromSqlRaw($"SELECT \"Id\", \"DisplayName\", \"ParentId\", \"Type\", \"DateTimeCreated\", \"DateTimeUpdated\", \"SortOrder\" FROM \"ItemsView\" WHERE \"ParentId\" = '{parentId}' ORDER BY \"SortOrder\"")
-            .ToListAsync();
+            .ToAssortmentAsync();
 
         return result;
     }

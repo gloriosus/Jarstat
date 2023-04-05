@@ -6,13 +6,13 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class GetAllItemsHandler : IRequestHandler<GetAllItemsQuery, Result<List<Item>>>
+public class GetAllItemsHandler : IRequestHandler<GetAllItemsQuery, Result<Assortment<Item>>>
 {
     private readonly IItemRepository _itemRepository;
 
     public GetAllItemsHandler(IItemRepository itemRepository) => _itemRepository = itemRepository;
 
-    public async Task<Result<List<Item>>> Handle(GetAllItemsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<Assortment<Item>>> Handle(GetAllItemsQuery request, CancellationToken cancellationToken)
     {
         var result = await _itemRepository.GetAllAsync();
         return result;

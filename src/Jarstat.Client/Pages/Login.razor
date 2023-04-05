@@ -49,8 +49,8 @@
 
         if (loginResponse.IsSuccessStatusCode)
         {
-            var result = await loginResponse.Content.ReadFromJsonAsync<Result<UserSession?>>();
-            var userSession = result?.Value!;
+            var result = await loginResponse.Content.ReadFromJsonAsync<Result<UserSession>>();
+            var userSession = result?.Value;
             var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
             await customAuthStateProvider.UpdateAuthenticationState(userSession);
 
@@ -58,7 +58,7 @@
         }
         else if (loginResponse.StatusCode == HttpStatusCode.Unauthorized)
         {
-            var result = await loginResponse.Content.ReadFromJsonAsync<Result<UserSession?>>();
+            var result = await loginResponse.Content.ReadFromJsonAsync<Result<UserSession>>();
 
             Layout.ErrorType = AlertType.Error;
             Layout.ErrorCode = result!.Error.Code;

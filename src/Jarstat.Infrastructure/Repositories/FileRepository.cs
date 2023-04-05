@@ -14,7 +14,7 @@ public class FileRepository : IFileRepository
         _dbContext = dbContext;
     }
 
-    public async Task<Domain.Entities.File?> GetByIdAsync(Guid? id)
+    public async Task<Domain.Entities.File> GetByIdAsync(Guid? id)
     {
         var result = await _dbContext.Set<Domain.Entities.File>()
             .FirstOrDefaultAsync(f => f.Id == id);
@@ -22,13 +22,13 @@ public class FileRepository : IFileRepository
         return result;
     }
 
-    public async Task<Domain.Entities.File?> CreateAsync(Domain.Entities.File file)
+    public async Task<Domain.Entities.File> CreateAsync(Domain.Entities.File file)
     {
         var result = await _dbContext.Set<Domain.Entities.File>().AddAsync(file);
         return result.Entity;
     }
 
-    public Domain.Entities.File? Delete(Domain.Entities.File file)
+    public Domain.Entities.File Delete(Domain.Entities.File file)
     {
         var result = _dbContext.Set<Domain.Entities.File>().Remove(file);
         return result.Entity;

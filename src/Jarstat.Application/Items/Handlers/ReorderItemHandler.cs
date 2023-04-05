@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Update;
 
 namespace Jarstat.Application.Handlers;
 
-public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Item?>>
+public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Item>>
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IFolderRepository _folderRepository;
@@ -28,19 +28,19 @@ public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Ite
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Item?>> Handle(ReorderItemCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Item>> Handle(ReorderItemCommand request, CancellationToken cancellationToken)
     {
         var items = await _itemRepository.GetAllAsync();
         var moveableItem = items.FirstOrDefault(i => i.Id == request.ItemId);
         var targetItem = items.FirstOrDefault(i => i.Id == request.TargetItemId);
 
         if (moveableItem is null)
-            return Result<Item?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.ItemId), typeof(Guid).ToString(), request.ItemId.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.ItemId), typeof(Guid).ToString(), request.ItemId.ToString());
 
         if (targetItem is null)
-            return Result<Item?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.TargetItemId), typeof(Guid).ToString(), request.TargetItemId.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.TargetItemId), typeof(Guid).ToString(), request.TargetItemId.ToString());
 
         var targetItemParentId = GetParentId(targetItem, request.DropPosition);
         var itemsInFolder = GetFolderItems(targetItemParentId, items);
@@ -67,27 +67,26 @@ public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Ite
         }
         catch (Exception ex)
         {
-            return Result<Item?>.Failure(DomainErrors.Exception
-                .WithParameters(ex.InnerException?.Message!));
+            return DomainErrors.Exception.WithParameters(ex.InnerException?.Message!);
         }
 
         return reorderedItem;
     }
 
-    private async Task<Result<Item?>> DowngradeItemsAbove(Item reorderedItem, Guid targetItemParentId)
+    private async Task<Result<Item>> DowngradeItemsAbove(Item reorderedItem, Guid targetItemParentId)
     {
         var documentResult = await DowngradeDocumentsAbove(reorderedItem, targetItemParentId);
         if (documentResult.IsFailure)
-            return Result<Item?>.Failure(documentResult.Error);
+            return documentResult.AsResult<Item>();
 
         var folderResult = await DowngradeFoldersAbove(reorderedItem, targetItemParentId);
         if (folderResult.IsFailure)
-            return Result<Item?>.Failure(folderResult.Error);
+            return folderResult.AsResult<Item>();
 
-        return Result<Item?>.Success(default);
+        return Item.Default;
     }
 
-    private async Task<Result<Document?>> DowngradeDocumentsAbove(Item reorderedItem, Guid targetItemParentId)
+    private async Task<Result<Document>> DowngradeDocumentsAbove(Item reorderedItem, Guid targetItemParentId)
     {
         var documentsInFolder = (await _documentRepository.GetByFolderId(targetItemParentId))
                                                           .Where(d => d.Id != reorderedItem.Id);
@@ -101,10 +100,10 @@ public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Ite
             _documentRepository.Update(orderedDocument);
         }
 
-        return Result<Document?>.Success(default);
+        return Document.Default;
     }
 
-    private async Task<Result<Folder?>> DowngradeFoldersAbove(Item reorderedItem, Guid targetItemParentId)
+    private async Task<Result<Folder>> DowngradeFoldersAbove(Item reorderedItem, Guid targetItemParentId)
     {
         var foldersInFolder = (await _folderRepository.GetByParentId(targetItemParentId))
                                                           .Where(d => d.Id != reorderedItem.Id);
@@ -118,27 +117,27 @@ public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Ite
             _folderRepository.Update(orderedFolder);
         }
 
-        return Result<Folder?>.Success(default);
+        return Folder.Default;
     }
 
-    private async Task<Result<Item?>> ReorderItem(Item item, Guid targetItemParentId, double sortOrder)
+    private async Task<Result<Item>> ReorderItem(Item item, Guid targetItemParentId, double sortOrder)
     {
         switch (item.Type)
         {
             case "Document":
                 var documentResult = await ReorderDocument(item, targetItemParentId, sortOrder);
-                var document = documentResult.Value;
-                return new Result<Item?>((Item?)document, documentResult.IsSuccess, documentResult.Error);
+                var document = documentResult.Value!;
+                return documentResult.AsResult((Item)document);
             case "Folder":
                 var folderResult = await ReorderFolder(item, targetItemParentId, sortOrder);
-                var folder = folderResult.Value;
-                return new Result<Item?>((Item?)folder, folderResult.IsSuccess, folderResult.Error);
+                var folder = folderResult.Value!;
+                return folderResult.AsResult((Item)folder);
             default:
                 throw new ArgumentException("Недопустимое значение параметра", nameof(item.Type));
         }
     }
 
-    private async Task<Result<Document?>> ReorderDocument(Item documentItem, Guid targetItemParentId, double sortOrder)
+    private async Task<Result<Document>> ReorderDocument(Item documentItem, Guid targetItemParentId, double sortOrder)
     {
         var document = (await _documentRepository.GetByIdAsync(documentItem.Id))!;
 
@@ -170,7 +169,7 @@ public class ReorderItemHandler : IRequestHandler<ReorderItemCommand, Result<Ite
         }
     }
 
-    private async Task<Result<Folder?>> ReorderFolder(Item folderItem, Guid targetItemParentId, double sortOrder)
+    private async Task<Result<Folder>> ReorderFolder(Item folderItem, Guid targetItemParentId, double sortOrder)
     {
         var folder = (await _folderRepository.GetByIdAsync(folderItem.Id))!;
 

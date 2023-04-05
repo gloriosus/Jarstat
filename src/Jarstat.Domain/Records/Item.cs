@@ -1,3 +1,16 @@
-﻿namespace Jarstat.Domain.Records;
+﻿using Jarstat.Domain.Abstractions;
 
-public sealed record Item(Guid Id, string DisplayName, Guid? ParentId, string Type, DateTime DateTimeCreated, DateTime DateTimeUpdated, double SortOrder);
+namespace Jarstat.Domain.Records;
+
+public sealed record Item(
+    Guid Id, 
+    string DisplayName, 
+    Guid? ParentId, 
+    string Type, 
+    DateTime DateTimeCreated,
+    DateTime DateTimeUpdated,
+    double SortOrder) 
+    : IDefault<Item>
+{
+    public static Item? Default => null;
+}

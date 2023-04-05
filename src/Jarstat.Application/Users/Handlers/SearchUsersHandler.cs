@@ -8,21 +8,21 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class SearchUsersHandler : IRequestHandler<SearchUsersCommand, Result<SearchResult<User>>>
+public class SearchUsersHandler : IRequestHandler<SearchUsersCommand, Result<SearchValue<User>>>
 {
     private readonly IUserRepository _userRepository;
 
     public SearchUsersHandler(IUserRepository userRepository) => _userRepository = userRepository;
 
-    public async Task<Result<SearchResult<User>>> Handle(SearchUsersCommand request, CancellationToken cancellationToken)
+    public async Task<Result<SearchValue<User>>> Handle(SearchUsersCommand request, CancellationToken cancellationToken)
     {
         if (request.Skip < 0)
-            return Result<SearchResult<User>>.Failure(DomainErrors.ArgumentNotAcceptableValue
-                .WithParameters(nameof(request.Skip), typeof(int).ToString(), request.Skip.ToString()));
+            return DomainErrors.ArgumentNotAcceptableValue
+                .WithParameters(nameof(request.Skip), typeof(int).ToString(), request.Skip.ToString());
 
         if (request.Take <= 0)
-            return Result<SearchResult<User>>.Failure(DomainErrors.ArgumentNotAcceptableValue
-                .WithParameters(nameof(request.Take), typeof(int).ToString(), request.Take.ToString()));
+            return DomainErrors.ArgumentNotAcceptableValue
+                .WithParameters(nameof(request.Take), typeof(int).ToString(), request.Take.ToString());
 
         var result = await _userRepository.SearchAsync(request.UserName, request.Skip, request.Take);
 

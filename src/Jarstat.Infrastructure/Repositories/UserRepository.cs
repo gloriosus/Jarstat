@@ -1,6 +1,9 @@
 ﻿using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
 using Jarstat.Domain.Records;
+using Jarstat.Domain.Shared;
+using Jarstat.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jarstat.Infrastructure.Repositories;
@@ -8,10 +11,17 @@ namespace Jarstat.Infrastructure.Repositories;
 public class UserRepository : IUserRepository
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly UserManager<User> _userManager;
 
-    public UserRepository(ApplicationDbContext dbContext) => _dbContext = dbContext;
+    public UserRepository(
+        ApplicationDbContext dbContext,
+        UserManager<User> userManager)
+    {
+        _dbContext = dbContext;
+        _userManager = userManager;
+    }
 
-    public async Task<SearchResult<User>> SearchAsync(string? username, int skip = 0, int take = 10)
+    public async Task<SearchValue<User>> SearchAsync(string? username, int skip = 0, int take = 10)
     {
         var result = _dbContext.Set<User>()
             .FromSqlRaw($"SELECT * FROM \"AspNetUsers\" WHERE \"UserName\" != 'root'");
@@ -25,6 +35,12 @@ public class UserRepository : IUserRepository
 
         List<User> users = await result.ToListAsync();
 
-        return new SearchResult<User>(users, count);
+        return new SearchValue<User>(users, count);
+    }
+
+    public async Task<Assortment<User>> GetAllAsync()
+    {
+        var users = await _userManager.Users.ToAssortmentAsync();
+        return users;
     }
 }

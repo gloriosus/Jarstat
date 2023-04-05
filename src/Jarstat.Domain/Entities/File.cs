@@ -1,11 +1,12 @@
-﻿using Jarstat.Domain.Errors;
+﻿using Jarstat.Domain.Abstractions;
+using Jarstat.Domain.Errors;
 using Jarstat.Domain.Primitives;
 using Jarstat.Domain.Shared;
 using System.Text.Json.Serialization;
 
 namespace Jarstat.Domain.Entities;
 
-public sealed class File : Entity
+public sealed class File : Entity, IDefault<File>
 {
     private File() { }
 
@@ -28,35 +29,24 @@ public sealed class File : Entity
 
     public byte[] Value { get; private set; } = null!;
 
-    public static Result<File?> Create(byte[] value, User creator)
+    public static File? Default => null;
+
+    public static Result<File> Create(byte[] value, User creator)
     {
         if (value is null)
-            return Result<File?>.Failure(DomainErrors.ArgumentNullValue
+            return Result<File>.Failure(DomainErrors.ArgumentNullValue
                 .WithParameters(nameof(value), typeof(byte[]).ToString()));
 
         if (value.Length == 0)
-            return Result<File?>.Failure(DomainErrors.ArgumentArrayLengthIsZeroValue
+            return Result<File>.Failure(DomainErrors.ArgumentArrayLengthIsZeroValue
                 .WithParameters(nameof(value), typeof(byte[]).ToString()));
 
         if (creator is null)
-            return Result<File?>.Failure(DomainErrors.ArgumentNullValue
+            return Result<File>.Failure(DomainErrors.ArgumentNullValue
                 .WithParameters(nameof(creator), typeof(User).ToString()));
 
         var content = new File(Guid.NewGuid(), value, DateTime.UtcNow, DateTime.UtcNow, creator, creator);
 
         return content;
     }
-
-    //public Result<Content> Update(byte[] content)
-    //{
-    //    if (content is null)
-    //        return Result<Content>.Failure(DomainErrors.ArgumentNullValue);
-
-    //    if (content.Length == 0)
-    //        return Result<Content>.Failure(DomainErrors.ArgumentArrayLengthIsZeroValue);
-
-    //    Value = content;
-
-    //    return this;
-    //}
 }

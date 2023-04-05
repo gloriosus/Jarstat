@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Queries;
 
-public class DownloadFileQuery : IRequest<Result<Document?>>
+public class DownloadFileQuery : IRequest<Result<Document>>
 {
     public DownloadFileQuery(Guid id) => Id = id;
 

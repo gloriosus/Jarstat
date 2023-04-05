@@ -1,6 +1,8 @@
 ﻿using Jarstat.Domain.Abstractions;
 using Jarstat.Domain.Entities;
 using Jarstat.Domain.Records;
+using Jarstat.Domain.Shared;
+using Jarstat.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
@@ -15,18 +17,18 @@ public class DocumentRepository : IDocumentRepository
         _dbContext = dbContext;
     }
 
-    public async Task<List<Document>> GetAllAsync()
+    public async Task<Assortment<Document>> GetAllAsync()
     {
         var result = await _dbContext.Set<Document>()
             .Include(document => document.Folder)
             .Include(document => document.Creator)
             .Include(document => document.LastUpdater)
-            .ToListAsync();
+            .ToAssortmentAsync();
 
         return result;
     }
 
-    public async Task<Document?> GetByIdAsync(Guid id)
+    public async Task<Document> GetByIdAsync(Guid id)
     {
         var result = await _dbContext.Set<Document>()
             .Include(document => document.Folder)
@@ -37,37 +39,37 @@ public class DocumentRepository : IDocumentRepository
         return result;
     }
 
-    public async Task<Document?> CreateAsync(Document document)
+    public async Task<Document> CreateAsync(Document document)
     {
         var result = await _dbContext.Set<Document>().AddAsync(document);
         return result.Entity;
     }
 
-    public Document? Delete(Document document)
+    public Document Delete(Document document)
     {
         var result = _dbContext.Set<Document>().Remove(document);
         return result.Entity;
     }
 
-    public Document? Update(Document document)
+    public Document Update(Document document)
     {
         var result = _dbContext.Set<Document>().Update(document);
         return result.Entity;
     }
 
-    public async Task<List<Document>> GetByFolderId(Guid folderId)
+    public async Task<Assortment<Document>> GetByFolderId(Guid folderId)
     {
         var result = await _dbContext.Set<Document>()
             .Include(document => document.Folder)
             .Include(document => document.Creator)
             .Include(document => document.LastUpdater)
             .Where(document => document.FolderId.Equals(folderId))
-            .ToListAsync();
+            .ToAssortmentAsync();
 
         return result;
     }
 
-    public async Task<SearchResult<Document>> SearchDocuments(string? displayName, Guid[] parentIds, int skip = 0, int take = 10)
+    public async Task<SearchValue<Document>> SearchDocuments(string? displayName, Guid[] parentIds, int skip = 0, int take = 10)
     {
         var result = _dbContext.Set<Document>()
                                .Include(d => d.Folder)
@@ -87,6 +89,6 @@ public class DocumentRepository : IDocumentRepository
 
         List<Document> documents = await result.ToListAsync();
 
-        return new SearchResult<Document>(documents, count);
+        return new SearchValue<Document>(documents, count);
     }
 }

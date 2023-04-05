@@ -1,4 +1,6 @@
-﻿using Jarstat.Domain.Abstractions;
+﻿using Jarstat.Client.Abstractions;
+using Jarstat.Domain.Abstractions;
+using Jarstat.Domain.Shared;
 using System.Text.Json.Serialization;
 
 namespace Jarstat.Client.Responses;

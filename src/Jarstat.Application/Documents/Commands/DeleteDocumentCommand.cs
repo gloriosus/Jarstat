@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class DeleteDocumentCommand : IRequest<Result<Document?>>
+public class DeleteDocumentCommand : IRequest<Result<Document>>
 {
     public DeleteDocumentCommand(Guid id) => Id = id;
 

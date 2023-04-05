@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Jarstat.Application.Commands;
 
-public class UpdateDocumentCommand : IRequest<Result<Document?>>
+public class UpdateDocumentCommand : IRequest<Result<Document>>
 {
     public Guid Id { get; set; }
     public string DisplayName { get; set; } = null!;

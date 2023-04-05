@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Jarstat.Application.Handlers;
 
-public class CreateFolderHandler : IRequestHandler<CreateFolderCommand, Result<Folder?>>
+public class CreateFolderHandler : IRequestHandler<CreateFolderCommand, Result<Folder>>
 {
     private readonly IFolderRepository _folderRepository;
     private readonly IDocumentRepository _documentRepository;
@@ -27,7 +27,7 @@ public class CreateFolderHandler : IRequestHandler<CreateFolderCommand, Result<F
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Folder?>> Handle(CreateFolderCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Folder>> Handle(CreateFolderCommand request, CancellationToken cancellationToken)
     {
         var folderCreationResult = await CreateAsync(request);
         if (folderCreationResult.IsFailure)
@@ -49,19 +49,18 @@ public class CreateFolderHandler : IRequestHandler<CreateFolderCommand, Result<F
         }
         catch (Exception ex)
         {
-            return Result<Folder?>.Failure(DomainErrors.Exception
-                .WithParameters(ex.InnerException?.Message!));
+            return DomainErrors.Exception.WithParameters(ex.InnerException?.Message!);
         }
 
         return result;
     }
 
-    private async Task<Result<Folder?>> CreateAsync(CreateFolderCommand request)
+    private async Task<Result<Folder>> CreateAsync(CreateFolderCommand request)
     {
         var creator = await _userManager.FindByIdAsync(request.CreatorId.ToString());
         if (creator is null)
-            return Result<Folder?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.CreatorId), typeof(Guid).ToString(), request.CreatorId.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.CreatorId), typeof(Guid).ToString(), request.CreatorId.ToString());
 
         Folder? parent = null;
         if (request.ParentId is not null)
@@ -70,7 +69,7 @@ public class CreateFolderHandler : IRequestHandler<CreateFolderCommand, Result<F
         return Folder.Create(request.DisplayName, request.VirtualPath, parent, creator);
     }
 
-    private async Task<Result<Folder?>> DowngradeDocumentsAbove(CreateFolderCommand request)
+    private async Task<Result<Folder>> DowngradeDocumentsAbove(CreateFolderCommand request)
     {
         var documentsInFolder = await _documentRepository.GetByFolderId((Guid)request.ParentId!);
 
@@ -78,17 +77,16 @@ public class CreateFolderHandler : IRequestHandler<CreateFolderCommand, Result<F
         {
             var documentOrderingResult = document.ChangeSortOrder(document.SortOrder / 2);
             if (documentOrderingResult.IsFailure)
-                // TODO: change later
-                return Result<Folder?>.Failure(documentOrderingResult.Error);
+                return documentOrderingResult.AsResult<Folder>();
 
             var orderedDocument = documentOrderingResult.Value!;
             _documentRepository.Update(orderedDocument);
         }
 
-        return Result<Folder?>.Success(default);
+        return Folder.Default;
     }
 
-    private async Task<Result<Folder?>> DowngradeFoldersAbove(Folder createdFolder, CreateFolderCommand request)
+    private async Task<Result<Folder>> DowngradeFoldersAbove(Folder createdFolder, CreateFolderCommand request)
     {
         var foldersInFolder = (await _folderRepository.GetByParentId(request.ParentId))
                                                       .Where(f => f.Id != createdFolder.Id);
@@ -103,6 +101,6 @@ public class CreateFolderHandler : IRequestHandler<CreateFolderCommand, Result<F
             _folderRepository.Update(orderedFolder);
         }
 
-        return Result<Folder?>.Success(default);
+        return Folder.Default;
     }
 }

@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Jarstat.Application.Handlers;
 
-public class DeleteFolderHandler : IRequestHandler<DeleteFolderCommand, Result<Folder?>>
+public class DeleteFolderHandler : IRequestHandler<DeleteFolderCommand, Result<Folder>>
 {
     private readonly IFolderRepository _folderRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -18,12 +18,12 @@ public class DeleteFolderHandler : IRequestHandler<DeleteFolderCommand, Result<F
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Folder?>> Handle(DeleteFolderCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Folder>> Handle(DeleteFolderCommand request, CancellationToken cancellationToken)
     {
         var folder = await _folderRepository.GetByIdAsync(request.Id);
         if (folder is null)
-            return Result<Folder?>.Failure(DomainErrors.EntryNotFound
-                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString()));
+            return DomainErrors.EntryNotFound
+                .WithParameters(nameof(request.Id), typeof(Guid).ToString(), request.Id.ToString());
 
         var result = _folderRepository.Delete(folder);
 
@@ -33,8 +33,7 @@ public class DeleteFolderHandler : IRequestHandler<DeleteFolderCommand, Result<F
         }
         catch (Exception ex)
         {
-            return Result<Folder?>.Failure(DomainErrors.Exception
-                .WithParameters(ex.InnerException?.Message!));
+            return DomainErrors.Exception.WithParameters(ex.InnerException?.Message!);
         }
 
         return result;
